@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+  :root {
+    --background: #fdf8f0;
+    --foreground: #2c2420;
+    --primary: #0d7377;
+    --primary-foreground: #fdf8f0;
+    --secondary: #c97b3a;
+    --secondary-foreground: #fdf8f0;
+    --accent: #e8a14a;
+    --muted: #f0ebe3;
+    --muted-foreground: #6b5f57;
+    --border: #e6dcd2;
+    --destructive: #c8554e;
+    --warning: #cc821f;
+    --success: #3a8f6f;
+    --card: #fffcf7;
+    --card-foreground: #2c2420;
+    --shadow: rgba(44, 36, 32, 0.08);
+    --ring: #0d7377;
+  }
+
+  .dark {
+    --background: #141e28;
+    --foreground: #efe6db;
+    --primary: #45c4c9;
+    --primary-foreground: #0f1720;
+    --secondary: #d4894a;
+    --secondary-foreground: #0f1720;
+    --accent: #e8a14a;
+    --muted: #1e2a37;
+    --muted-foreground: #bcc5d0;
+    --border: #2a3847;
+    --destructive: #d46a63;
+    --warning: #d98a2a;
+    --success: #4caa87;
+    --card: #1a2533;
+    --card-foreground: #efe6db;
+    --shadow: rgba(0, 0, 0, 0.35);
+    --ring: #45c4c9;
+  }
+}
+
+@layer utilities {
+  .gradient-brand {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+  }
+  .gradient-warm {
+    background: linear-gradient(135deg, var(--accent), var(--secondary));
+  }
+  .gradient-cool {
+    background: linear-gradient(135deg, var(--primary), #1a8a8f);
+  }
+  .text-gradient {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.currency {
+  font-variant-numeric: tabular-nums;
+}
+
+* {
+  border-color: var(--border);
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.bottom-sheet {
+  transition: transform 0.3s ease-out;
+}
+
+.bottom-sheet[data-state="open"] {
+  transform: translateY(0);
+}
+
+.bottom-sheet[data-state="closed"] {
+  transform: translateY(100%);
+}
+
+.scan-progress {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
