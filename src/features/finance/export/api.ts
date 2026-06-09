@@ -22,32 +22,16 @@ export async function exportReport(params: ExportParams): Promise<void> {
   if (params.endDate) searchParams.set("endDate", params.endDate);
 
   const res = await fetch(`/api/export?${searchParams}`);
-
-  if (res.status === 422) {
-    const json = await res.json();
-    const err: any = new Error(json.message || "Export limit reached");
-    err.data = json.data;
-    throw err;
-  }
-
-  if (!res.ok) {
-    const json = await res.json().catch(() => ({}));
-    throw new Error(json.message || "Export failed");
-  }
-
   const blob = await res.blob();
-  const disposition = res.headers.get("Content-Disposition") ?? "";
-  const match = disposition.match(/filename="?(.+?)"?$/);
-  const filename = match?.[1] ?? `export.${params.format}`;
-
+  const disposition = res.headers.get("Content-Disposition");
+  const match = disposition?.match(/filename="?(.+?)"?$/);
+  const name = match?.[1] ?? `${params.reportId}.${params.format}`;
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
+  a.download = name;
   a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  URL.revokeObjectURL(url);
 }
 
 export async function exportFullBackup(): Promise<{ url: string; expiresAt: string }> {

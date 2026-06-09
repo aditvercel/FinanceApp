@@ -38,12 +38,6 @@ export default function ExportPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [error, setError] = useState("");
-  const [suggestions, setSuggestions] = useState<Array<{
-    label: string;
-    startDate: string;
-    endDate: string;
-    estimatedCount: number;
-  }> | null>(null);
 
   const handleExport = async () => {
     if (!selectedReportId) {
@@ -51,30 +45,18 @@ export default function ExportPage() {
       return;
     }
     setError("");
-    setSuggestions(null);
 
-    try {
-      await exportMutation.mutateAsync({
-        reportId: selectedReportId,
-        format,
-        period,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-      });
-    } catch (err) {
-      const e = err as { data?: { suggestions: Array<{ label: string; startDate: string; endDate: string; estimatedCount: number }> }; message?: string };
-      if (e.data?.suggestions) {
-        setSuggestions(e.data.suggestions);
-      } else {
-        setError(e.message || "Export failed. Try again.");
-      }
-    }
-  };
-
-  const applySuggestion = (suggestion: { label: string; startDate: string; endDate: string; estimatedCount: number }) => {
-    setStartDate(suggestion.startDate);
-    setEndDate(suggestion.endDate);
-    setSuggestions(null);
+    const p = new URLSearchParams({ reportId: selectedReportId, format, period });
+    if (startDate) p.set("startDate", startDate);
+    if (endDate) p.set("endDate", endDate);
+    const res = await fetch(`/api/export?${p}`);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Financial Report(${startDate} to ${endDate}).${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -199,36 +181,7 @@ export default function ExportPage() {
           </div>
         )}
 
-        {suggestions && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <p className="text-sm font-medium text-amber-800 mb-2">
-              This report has many entries. PDF export is limited to 10,000 entries.
-            </p>
-            <p className="text-xs text-amber-700 mb-3">
-              Choose a date range below or switch to CSV.
-            </p>
-            <div className="space-y-2">
-                {suggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => applySuggestion(s)}
-                    className="w-full flex items-center justify-between p-2.5 bg-(--card) border border-amber-200 rounded-lg text-sm hover:bg-amber-50"
-                  >
-                    <span className="font-medium">{s.label}</span>
-                    <span className="text-gray-500">
-                      ~{s.estimatedCount} entries
-                    </span>
-                  </button>
-                ))}
-            </div>
-            <button
-              onClick={() => { setFormat("csv"); setSuggestions(null); }}
-              className="mt-3 text-sm text-blue-600 hover:text-blue-700"
-            >
-              Or export as CSV (no entry limit) →
-            </button>
-          </div>
-        )}
+
 
         <button
           onClick={handleExport}

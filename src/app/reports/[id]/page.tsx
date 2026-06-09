@@ -100,33 +100,17 @@ export default function ReportDetailPage() {
   const handleExportPdf = async () => {
     setExportingPdf(true);
     try {
-      const params = new URLSearchParams({ reportId: id, format: "pdf", period: "all" });
-      const res = await fetch(`/api/export?${params}`);
-
-      if (res.status === 422) {
-        toast("Report has too many entries. Try a smaller date range from the Export page.", "error");
-        return;
-      }
-
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json.message || "Export failed");
-      }
-
+      const res = await fetch(`/api/export?reportId=${id}&format=pdf&period=all`);
       const blob = await res.blob();
-      const disposition = res.headers.get("Content-Disposition") ?? "";
-      const match = disposition.match(/filename="?(.+?)"?$/);
-      const filename = match?.[1] ?? "export.pdf";
-
+      const disposition = res.headers.get("Content-Disposition");
+      const match = disposition?.match(/filename="?(.+?)"?$/);
+      const name = match?.[1] ?? `${id}.pdf`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
+      a.download = name;
       a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 10_000);
-      toast("Download started", "success");
+      URL.revokeObjectURL(url);
     } catch (err) {
       toast(err instanceof Error ? err.message : "Export failed", "error");
     } finally {
