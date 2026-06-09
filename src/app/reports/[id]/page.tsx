@@ -33,6 +33,7 @@ import {
   ShieldCheck,
   Check,
   Copy,
+  Download,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -91,9 +92,47 @@ export default function ReportDetailPage() {
     displayName?: string;
   } | null>(null);
   const [requestSent, setRequestSent] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const requestEditor = useRequestEditorAccess();
   const manageMember = useManageMember();
   const { toast } = useToast();
+
+  const handleExportPdf = async () => {
+    setExportingPdf(true);
+    try {
+      const params = new URLSearchParams({ reportId: id, format: "pdf", period: "all" });
+      const res = await fetch(`/api/export?${params}`);
+
+      if (res.status === 422) {
+        toast("Report has too many entries. Try a smaller date range from the Export page.", "error");
+        return;
+      }
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.message || "Export failed");
+      }
+
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const match = disposition.match(/filename="?(.+?)"?$/);
+      const filename = match?.[1] ?? "export.pdf";
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      toast("Download started", "success");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Export failed", "error");
+    } finally {
+      setExportingPdf(false);
+    }
+  };
 
   const deleteEntry = useMutation({
     mutationFn: async (entryId: string) => {
@@ -249,6 +288,18 @@ export default function ReportDetailPage() {
             <ArrowLeft className="w-5 h-5 text-(--foreground)" />
           </button>
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportPdf}
+              disabled={exportingPdf}
+              className="p-2 hover:bg-(--muted)rounded-lg"
+              title="Export PDF"
+            >
+              {exportingPdf ? (
+                <Loader2 className="w-4 h-4 animate-spin text-(--foreground)" />
+              ) : (
+                <Download className="w-4 h-4 text-(--foreground)" />
+              )}
+            </button>
             <button onClick={() => setShowShare(true)} className="p-2 hover:bg-(--muted)rounded-lg">
               <Share2 className="w-4 h-4 text-(--foreground)" />
             </button>

@@ -6,20 +6,14 @@ export interface ExportParams {
   endDate?: string;
 }
 
-export interface ExportResult {
-  url: string;
-  expiresAt: string;
-  format: string;
-  entryCount?: number;
-  suggestions?: Array<{
-    label: string;
-    startDate: string;
-    endDate: string;
-    estimatedCount: number;
-  }>;
+export interface ExportSuggestion {
+  label: string;
+  startDate: string;
+  endDate: string;
+  estimatedCount: number;
 }
 
-export async function exportReport(params: ExportParams): Promise<ExportResult> {
+export async function exportReport(params: ExportParams): Promise<void> {
   const searchParams = new URLSearchParams();
   searchParams.set("reportId", params.reportId);
   searchParams.set("format", params.format);
@@ -28,13 +22,32 @@ export async function exportReport(params: ExportParams): Promise<ExportResult> 
   if (params.endDate) searchParams.set("endDate", params.endDate);
 
   const res = await fetch(`/api/export?${searchParams}`);
-  const json = await res.json();
-  if (!res.ok) {
-    const err: any = new Error(json.message || "Export failed");
-    if (json.data) err.data = json.data;
+
+  if (res.status === 422) {
+    const json = await res.json();
+    const err: any = new Error(json.message || "Export limit reached");
+    err.data = json.data;
     throw err;
   }
-  return json.data;
+
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    throw new Error(json.message || "Export failed");
+  }
+
+  const blob = await res.blob();
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const match = disposition.match(/filename="?(.+?)"?$/);
+  const filename = match?.[1] ?? `export.${params.format}`;
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 export async function exportFullBackup(): Promise<{ url: string; expiresAt: string }> {

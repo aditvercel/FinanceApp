@@ -4,6 +4,7 @@ import "./globals.css";
 import { QueryProvider } from "@/lib/query-provider";
 import { AuthProvider } from "@/lib/auth-provider";
 import { AuthGuard } from "@/components/auth-guard";
+import { ApiGuard } from "@/components/api-guard";
 import { ToastProvider } from "@/lib/toat";
 import { ThemeProvider } from "@/lib/theme-provider";
 
@@ -36,9 +37,11 @@ export default function RootLayout({
         <QueryProvider>
           <ThemeProvider>
             <AuthProvider>
-              <AuthGuard>
-                {children}
-              </AuthGuard>
+              <ApiGuard>
+                <AuthGuard>
+                  {children}
+                </AuthGuard>
+              </ApiGuard>
             </AuthProvider>
           </ThemeProvider>
         </QueryProvider>

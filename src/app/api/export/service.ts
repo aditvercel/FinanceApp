@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { ExportRow, BudgetRow, ExportSuggestion } from "./contract";
+import { renderCharts } from "./chart-renderer";
 
 const MAX_PDF_ENTRIES = 10000;
 
@@ -13,7 +14,9 @@ export class ExportService {
     startDate?: string,
     endDate?: string
   ): Promise<{
-    signedUrl: string;
+    buffer?: Buffer;
+    filename?: string;
+    contentType?: string;
     entryCount?: number;
     suggestions?: ExportSuggestion[];
   }> {
@@ -27,7 +30,6 @@ export class ExportService {
     if (format === "pdf" && entries.length > MAX_PDF_ENTRIES) {
       const suggestions = this.generateSuggestions(entries, period);
       return {
-        signedUrl: "",
         entryCount: entries.length,
         suggestions,
       };
@@ -50,34 +52,15 @@ export class ExportService {
         break;
     }
 
-    const path = `exports/${reportId}/${requestId}-${format}.${format === "pdf" ? "pdf" : format === "xlsx" ? "xlsx" : "csv"}`;
+    const filename = `${reportName}-${period}.${format === "pdf" ? "pdf" : format === "xlsx" ? "xlsx" : "csv"}`;
+    const contentType =
+      format === "csv"
+        ? "text/csv"
+        : format === "xlsx"
+          ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          : "application/pdf";
 
-    const { error: uploadError } = await supabase.storage
-      .from("exports")
-      .upload(path, buffer, {
-        contentType:
-          format === "csv"
-            ? "text/csv"
-            : format === "xlsx"
-              ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              : "application/pdf",
-        upsert: true,
-      });
-
-    if (uploadError) {
-      throw new Error(`Storage upload failed: ${uploadError.message}`);
-    }
-
-    const { data: urlData } = await supabase.storage
-      .from("exports")
-      .createSignedUrl(path, 3600);
-
-    const signedUrl = urlData?.signedUrl ?? "";
-
-    await this.createNotification(reportId, userId, format, signedUrl, requestId);
-    await this.createActivityEvent(reportId, userId, format, reportName, requestId);
-
-    return { signedUrl };
+    return { buffer, filename, contentType };
   }
 
   private async getReport(
@@ -369,28 +352,19 @@ export class ExportService {
     const PDFDocument = (await import("pdfkit")).default;
 
     return new Promise<Buffer>((resolve, reject) => {
-      const doc = new PDFDocument({
+      const d = new PDFDocument({
         size: "A4",
         margins: { top: 50, bottom: 50, left: 50, right: 50 },
       });
+      const doc: any = d;
 
       const chunks: Buffer[] = [];
-      doc.on("data", (chunk: Buffer) => chunks.push(chunk));
-      doc.on("end", () => resolve(Buffer.concat(chunks)));
-      doc.on("error", reject);
+      d.on("data", (chunk: Buffer) => chunks.push(chunk));
+      d.on("end", () => resolve(Buffer.concat(chunks)));
+      d.on("error", reject);
 
-      doc.fontSize(24).text(report.name, { align: "center" });
-      doc.fontSize(12).text("Financial Report", { align: "center" });
-      doc.moveDown(0.5);
-      doc.fontSize(10).text(`Generated: ${new Date().toISOString().split("T")[0]}`, {
-        align: "center",
-      });
-      doc.moveDown(0.5);
-      doc.text(
-        `Period: ${entries[entries.length - 1]?.date ?? "N/A"} to ${entries[0]?.date ?? "N/A"}`,
-        { align: "center" }
-      );
-      doc.moveDown(1.5);
+      const pageW = 495.28;
+      const marginX = 50;
 
       const totalIncome = entries
         .filter((e) => e.type === "income")
@@ -399,47 +373,112 @@ export class ExportService {
         .filter((e) => e.type === "expense")
         .reduce((s, e) => s + e.amount, 0);
 
-      doc.fontSize(14).text("Summary", { underline: true });
+      /* ── Cover Page ── */
+      doc.fontSize(28).fillColor("#1e3a5f").text(report.name, { align: "center" });
       doc.moveDown(0.5);
-      doc.fontSize(11);
-      doc.text(`Total Income: Rp ${totalIncome.toLocaleString("id-ID")}`);
-      doc.text(`Total Expense: Rp ${totalExpense.toLocaleString("id-ID")}`);
+      doc.fontSize(14).fillColor("#666").text("Financial Report", { align: "center" });
+      doc.moveDown(0.3);
+      doc.fontSize(10).text(`Generated: ${new Date().toISOString().split("T")[0]}`, { align: "center" });
+      doc.moveDown(0.3);
       doc.text(
-        `Net Balance: Rp ${(totalIncome - totalExpense).toLocaleString("id-ID")}`
+        `Period: ${entries[entries.length - 1]?.date ?? "N/A"} to ${entries[0]?.date ?? "N/A"}`,
+        { align: "center" }
       );
-      doc.text(`Entry Count: ${entries.length}`);
-      doc.moveDown(1.5);
+      doc.fillColor("#000");
 
-      doc.fontSize(14).text("Entries", { underline: true });
-      doc.moveDown(0.5);
+      doc.moveDown(3);
+      doc.fontSize(12).fillColor("#1e3a5f").text("Summary", { underline: false });
+      doc.moveDown(0.8);
 
-      const tableTop = doc.y;
-      const colWidths = [50, 60, 70, 80, 50];
-      const headers = ["Date", "Type", "Category", "Amount", "Ver"];
-      let y = tableTop;
+      const summaryY = doc.y;
+      const boxW = (pageW - 20) / 2;
+      const boxH = 70;
 
-      doc.fontSize(9).font("Helvetica-Bold");
-      let x = 50;
+      [["Income", totalIncome, "#34d399"], ["Expense", totalExpense, "#f87171"]].forEach(([label, val, color], i) => {
+        const bx = marginX + i * (boxW + 20);
+        doc.fillColor("#f8fafc").roundedRect(bx, summaryY, boxW, boxH, 6).fill();
+        doc.fillColor(color).fontSize(10).text(label as string, bx + 12, summaryY + 10);
+        doc.fillColor("#000").fontSize(16).font("Helvetica-Bold").text(
+          (val as number).toLocaleString("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }),
+          bx + 12,
+          summaryY + 28,
+          { width: boxW - 24 }
+        );
+        doc.font("Helvetica");
+      });
+
+      doc.y = summaryY + boxH + 15;
+      doc.fillColor("#1e3a5f").fontSize(12).text("Net Balance", { underline: false });
+      doc.moveDown(0.3);
+      const netColor = totalIncome - totalExpense >= 0 ? "#34d399" : "#f87171";
+      doc.fillColor(netColor).fontSize(22).font("Helvetica-Bold").text(
+        (totalIncome - totalExpense).toLocaleString("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 })
+      );
+      doc.fillColor("#000").font("Helvetica");
+      doc.moveDown(0.3);
+      doc.fontSize(9).fillColor("#666").text(`Total entries: ${entries.length}`);
+      doc.fillColor("#000");
+
+      /* ── Charts ── */
+      renderCharts(doc as any, entries);
+
+      /* ── Entries Table ── */
+      doc.addPage();
+      doc.fontSize(14).fillColor("#1e3a5f").text("Transaction History", { align: "center" });
+      doc.moveDown(0.8);
+      doc.fillColor("#000");
+
+      const colWidths = [50, 55, 70, 80, 45, 60, 50];
+      const headers = ["Date", "Type", "Category", "Amount", "Merchant", "Note", "Ver"];
+      const headerY = doc.y;
+
+      doc.fontSize(8).font("Helvetica-Bold").fillColor("#fff");
+      let x = marginX;
+      doc.fillColor("#1e3a5f").roundedRect(x, headerY - 4, pageW, 16, 3).fill();
+      doc.fillColor("#fff");
+      x = marginX + 4;
       headers.forEach((h, i) => {
-        doc.text(h, x, y, { width: colWidths[i], align: "left" });
+        doc.text(h, x, headerY, { width: colWidths[i], align: "left" });
         x += colWidths[i];
       });
-      doc.moveDown(0.3);
-      y = doc.y;
-      doc.font("Helvetica").fontSize(8);
+
+      let y = headerY + 18;
+      doc.font("Helvetica").fontSize(7).fillColor("#333");
+      let rowCount = 0;
 
       for (const entry of entries) {
-        if (y > 720) {
+        if (y > 740) {
           doc.addPage();
           y = 50;
+          rowCount = 0;
+
+          doc.fontSize(8).font("Helvetica-Bold").fillColor("#fff");
+          let hx = marginX;
+          doc.fillColor("#1e3a5f").roundedRect(hx, y - 4, pageW, 16, 3).fill();
+          doc.fillColor("#fff");
+          hx = marginX + 4;
+          headers.forEach((h, i) => {
+            doc.text(h, hx, y, { width: colWidths[i], align: "left" });
+            hx += colWidths[i];
+          });
+          y += 18;
+          doc.font("Helvetica").fontSize(7).fillColor("#333");
         }
 
-        x = 50;
+        if (rowCount % 2 === 0) {
+          doc.fillColor("#f8fafc");
+          doc.roundedRect(marginX, y - 2, pageW, 13, 2).fill();
+        }
+
+        doc.fillColor("#333");
+        x = marginX + 4;
         const row = [
           entry.date.slice(5),
           entry.type.slice(0, 4),
-          entry.category.slice(0, 12),
+          entry.category.slice(0, 14),
           entry.amount.toLocaleString("id-ID"),
+          (entry.merchant ?? "").slice(0, 10),
+          (entry.note ?? "").slice(0, 12),
           entry.version.toString(),
         ];
         row.forEach((cell, i) => {
@@ -447,66 +486,19 @@ export class ExportService {
           x += colWidths[i];
         });
         y += 14;
+        rowCount++;
       }
 
+      /* ── Footer ── */
       doc.moveDown(2);
-      doc.fontSize(8).font("Helvetica-Oblique");
+      doc.fontSize(7).font("Helvetica-Oblique").fillColor("#999");
       doc.text(
-        `Generated by FinanceApp · ${new Date().toISOString()}`,
+        `Generated by FinanceApp · ${new Date().toISOString().replace("T", " ").slice(0, 19)}`,
         { align: "center" }
       );
+      doc.fillColor("#000");
 
       doc.end();
     });
-  }
-
-  private async createNotification(
-    reportId: string,
-    userId: string,
-    format: string,
-    signedUrl: string,
-    requestId: string
-  ): Promise<void> {
-    const expiresAt = new Date(Date.now() + 3600000).toISOString();
-
-    try {
-      await supabase.from("notifications").insert({
-        user_id: userId,
-        type: "export.ready",
-        title: "Export ready",
-        body: `Your ${format.toUpperCase()} export is ready. Download before ${new Date(expiresAt).toLocaleTimeString()}.`,
-        action_url: signedUrl,
-        metadata: {
-          format,
-          expiresAt,
-          signedUrl,
-          exportParams: { reportId, format },
-        },
-      });
-    } catch (err) {
-      console.warn(`[${requestId}] Failed to create export notification:`, err);
-    }
-  }
-
-  private async createActivityEvent(
-    reportId: string,
-    userId: string,
-    format: string,
-    reportName: string,
-    requestId: string
-  ): Promise<void> {
-    try {
-      await supabase.from("activity_events").insert({
-        report_id: reportId,
-        actor_id: userId,
-        event_type: "report.exported",
-        metadata: {
-          format,
-          reportName,
-        },
-      });
-    } catch (err) {
-      console.warn(`[${requestId}] Failed to create activity event:`, err);
-    }
   }
 }

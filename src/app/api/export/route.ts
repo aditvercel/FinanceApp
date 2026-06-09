@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ExportService } from "./service";
 import { ExportQuerySchema } from "./contract";
 import { getUserId, requireRateLimit } from "@/lib/middleware";
-import { ok, err } from "@/lib/types";
+import { err } from "@/lib/types";
 
 const exportService = new ExportService();
 
@@ -66,13 +66,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      ok(
-        { signedUrl: result.signedUrl },
-        "Export generated",
-        requestId
-      )
-    );
+    return new NextResponse(new Uint8Array(result.buffer!), {
+      headers: {
+        "Content-Type": result.contentType!,
+        "Content-Disposition": `attachment; filename="${result.filename}"`,
+        "Content-Length": String(result.buffer!.length),
+      },
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Export failed";
