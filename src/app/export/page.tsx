@@ -37,7 +37,6 @@ export default function ExportPage() {
   const [period, setPeriod] = useState<"daily" | "monthly" | "yearly" | "all">("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [suggestions, setSuggestions] = useState<Array<{
     label: string;
@@ -52,27 +51,16 @@ export default function ExportPage() {
       return;
     }
     setError("");
-    setDownloadUrl(null);
     setSuggestions(null);
 
     try {
-      const result = await exportMutation.mutateAsync({
+      await exportMutation.mutateAsync({
         reportId: selectedReportId,
         format,
         period,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
       });
-
-      if (result.suggestions && result.suggestions.length > 0) {
-        setSuggestions(result.suggestions);
-        return;
-      }
-
-      if (result.url) {
-        setDownloadUrl(result.url);
-        globalThis.window.open(result.url, "_blank");
-      }
     } catch (err) {
       const e = err as { data?: { suggestions: Array<{ label: string; startDate: string; endDate: string; estimatedCount: number }> }; message?: string };
       if (e.data?.suggestions) {
@@ -239,28 +227,6 @@ export default function ExportPage() {
             >
               Or export as CSV (no entry limit) →
             </button>
-          </div>
-        )}
-
-        {downloadUrl && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Download className="w-5 h-5 text-emerald-600" />
-              <p className="font-medium text-emerald-800">
-                Export ready!
-              </p>
-            </div>
-            <a
-              href={downloadUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-blue-600 text-sm hover:underline break-all"
-            >
-              {downloadUrl}
-            </a>
-            <p className="text-xs text-emerald-600 mt-1">
-              Link expires in 1 hour.
-            </p>
           </div>
         )}
 
