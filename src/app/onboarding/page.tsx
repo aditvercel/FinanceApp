@@ -34,14 +34,14 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-(--card) flex flex-col">
       {step > 1 && (
         <div className="p-4">
           <button
             onClick={() => setStep(step - 1)}
-            className="p-1 -ml-1 hover:bg-gray-100 rounded-lg"
+            className="p-1 -ml-1 hover:bg-(--muted)rounded-lg"
           >
-            <ArrowLeft className="w-5 h-5 text-black" />
+            <ArrowLeft className="w-5 h-5 text-(--foreground)" />
           </button>
         </div>
       )}
@@ -63,10 +63,10 @@ export default function OnboardingPage() {
           {step === 1 && (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
               <div className="text-6xl mb-6">💰</div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">
+              <h1 className="text-3xl font-bold text-(--foreground) mb-3">
                 Welcome to Finance Tracker
               </h1>
-              <p className="text-black mb-8 max-w-sm">
+              <p className="text-(--foreground) mb-8 max-w-sm">
                 Track your finances simply, together or on your own.
               </p>
               <button
@@ -80,7 +80,7 @@ export default function OnboardingPage() {
 
           {step === 2 && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-(--foreground) mb-2">
                 How will you use this?
               </h2>
               <p className="text-gray-500 mb-6">
@@ -116,13 +116,13 @@ export default function OnboardingPage() {
                     className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
                       setupType === option.type
                         ? "border-blue-600 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
+                        : "border-(--border) hover:border-(--border)"
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{option.emoji}</span>
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-(--foreground)">
                           {option.title}
                         </div>
                         <div className="text-sm text-gray-500">
@@ -138,7 +138,7 @@ export default function OnboardingPage() {
 
           {step === 3 && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-(--foreground) mb-2">
                 Quick category setup
               </h2>
               <p className="text-gray-500 mb-6">
@@ -152,14 +152,14 @@ export default function OnboardingPage() {
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
                       cat.selected
                         ? "border-blue-300 bg-blue-50"
-                        : "border-gray-200"
+                        : "border-(--border)"
                     }`}
                   >
                     <div
                       className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                         cat.selected
                           ? "bg-blue-600 border-blue-600"
-                          : "border-gray-300"
+                          : "border-(--border)"
                       }`}
                     >
                       {cat.selected && (
@@ -167,7 +167,7 @@ export default function OnboardingPage() {
                       )}
                     </div>
                     <span className="text-lg">{cat.emoji}</span>
-                    <span className="font-medium text-gray-900">{cat.name}</span>
+                    <span className="font-medium text-(--foreground)">{cat.name}</span>
                   </button>
                 ))}
               </div>
@@ -180,7 +180,7 @@ export default function OnboardingPage() {
                 </button>
                 <button
                   onClick={() => setStep(4)}
-                  className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                  className="flex-1 border border-(--border) text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors"
                 >
                   Skip for now
                 </button>
@@ -191,10 +191,10 @@ export default function OnboardingPage() {
           {step === 4 && (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
               <div className="text-6xl mb-6">🎉</div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">
+              <h1 className="text-3xl font-bold text-(--foreground) mb-3">
                 You are all set!
               </h1>
-              <p className="text-black mb-8 max-w-sm">
+              <p className="text-(--foreground) mb-8 max-w-sm">
                 Add your first expense now — or scan a receipt to get started.
               </p>
               <div className="flex flex-col gap-3 w-full max-w-xs">
@@ -206,7 +206,7 @@ export default function OnboardingPage() {
                 </button>
                 <button
                   onClick={handleComplete}
-                  className="flex items-center justify-center gap-2 border border-gray-300 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-center gap-2 border border-(--border) text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors"
                 >
                   Add Manually
                 </button>

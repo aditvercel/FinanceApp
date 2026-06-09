@@ -9,7 +9,6 @@ import {
   Loader2,
   AlertTriangle,
   CheckCircle,
-  RefreshCw,
 } from "lucide-react";
 import { useReceiptScan } from "./hooks";
 import { useCreateEntry } from "@/features/finance/entries/hooks";
@@ -61,13 +60,14 @@ export function ReceiptScanFlow({
   open,
   onOpenChange,
   lockedReportId,
-  lockedReportName,
 }: ReceiptScanFlowProps) {
   const [step, setStep] = useState<"upload" | "scanning" | "review">("upload");
   const [preview, setPreview] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [progressLabel, setProgressLabel] = useState(LABELS[0]);
-  const [isOffline, setIsOffline] = useState(false);
+  const [isOffline, setIsOffline] = useState(
+    () => globalThis.window !== undefined && !navigator.onLine
+  );
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [entryType, setEntryType] = useState<"expense" | "income">("expense");
@@ -80,35 +80,23 @@ export function ReceiptScanFlow({
   const labelIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeout30Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    if (!navigator.onLine) setIsOffline(true);
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!open) {
-      setStep("upload");
-      setPreview(null);
-      setScanResult(null);
-      setError(null);
-      setEditedFields({});
-      setElapsed(0);
-      clearIntervals();
-    }
-  }, [open]);
-
   const clearIntervals = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (labelIntervalRef.current) clearInterval(labelIntervalRef.current);
     if (timeout30Ref.current) clearTimeout(timeout30Ref.current);
   };
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    globalThis.window.addEventListener("online", handleOnline);
+    globalThis.window.addEventListener("offline", handleOffline);
+    return () => {
+      globalThis.window.removeEventListener("online", handleOnline);
+      globalThis.window.removeEventListener("offline", handleOffline);
+      clearIntervals();
+    };
+  }, []);
 
   const handleFileSelect = useCallback(
     async (file: File) => {
@@ -177,12 +165,12 @@ export function ReceiptScanFlow({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white w-full h-[85vh] rounded-t-xl flex flex-col overflow-hidden">
+      <div className="bg-(--card) w-full h-[85vh] rounded-t-xl flex flex-col overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b shrink-0">
           <h2 className="text-xl font-bold">Scan Receipt</h2>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-2 hover:bg-(--muted)rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -202,7 +190,7 @@ export function ReceiptScanFlow({
               )}
 
               <div
-                className="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center cursor-pointer hover:border-blue-500 transition-colors"
+                className="border-2 border-dashed border-(--border) rounded-xl p-10 text-center cursor-pointer hover:border-blue-500 transition-colors"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
@@ -235,7 +223,7 @@ export function ReceiptScanFlow({
                     const input = document.createElement("input");
                     input.type = "file";
                     input.accept = "image/*";
-                    input.capture = "environment" as any;
+                    input.capture = "environment";
                     input.onchange = (e) => {
                       const file = (e.target as HTMLInputElement).files?.[0];
                       if (file) handleFileSelect(file);
@@ -299,7 +287,7 @@ export function ReceiptScanFlow({
                     Still working on it...
                   </p>
                 ) : (
-                  <p className="text-black">{progressLabel}</p>
+                  <p className="text-(--foreground)">{progressLabel}</p>
                 )}
               </div>
 
@@ -345,7 +333,7 @@ export function ReceiptScanFlow({
                           ? t === "expense"
                             ? "bg-red-100 text-red-700"
                             : "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-500"
+                          : "bg-(--muted)text-gray-500"
                       }`}
                     >
                       {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -370,9 +358,9 @@ export function ReceiptScanFlow({
                       type="number"
                       defaultValue={scanResult.total}
                       onChange={(e) =>
-                        updateField("total", parseFloat(e.target.value) || 0)
+                        updateField("total", Number.parseFloat(e.target.value) || 0)
                       }
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full pl-8 pr-3 py-2 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -384,7 +372,7 @@ export function ReceiptScanFlow({
                     type="date"
                     defaultValue={scanResult.date || new Date().toISOString().split("T")[0]}
                     onChange={(e) => updateField("date", e.target.value)}
-                    className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full py-2 px-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <span className="text-[10px] text-gray-400 mt-0.5 block">
                     ✦ extracted
@@ -400,7 +388,7 @@ export function ReceiptScanFlow({
                   type="text"
                   defaultValue={scanResult.merchant || ""}
                   onChange={(e) => updateField("merchant", e.target.value)}
-                  className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full py-2 px-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Merchant name"
                 />
                 <span className="text-[10px] text-gray-400 mt-0.5 block">
@@ -428,7 +416,7 @@ export function ReceiptScanFlow({
                       className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                         (getFieldValue("category") || scanResult.category) === cat
                           ? "bg-blue-600 text-white"
-                          : "bg-gray-100 text-black hover:bg-gray-200"
+                          : "bg-(--muted)text-(--foreground) hover:bg-gray-200"
                       }`}
                     >
                       {cat}
@@ -476,7 +464,7 @@ export function ReceiptScanFlow({
                 <textarea
                   defaultValue={scanResult.note}
                   onChange={(e) => updateField("note", e.target.value)}
-                  className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full py-2 px-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows={2}
                 />
                 <span className="text-[10px] text-gray-400 mt-0.5 block">
@@ -487,7 +475,7 @@ export function ReceiptScanFlow({
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="flex-1 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-2.5 border border-(--border) rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>

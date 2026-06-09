@@ -2,10 +2,8 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Tab } from "@headlessui/react";
-import { useAuth } from "@/lib/auth-provider";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
 import { useReport, useRequestEditorAccess, useManageMember } from "@/features/finance/reports/hooks";
 import { useToast } from "@/lib/toat";
 
@@ -37,6 +35,17 @@ import {
   Copy,
 } from "lucide-react";
 import Link from "next/link";
+
+interface Entry {
+  id: string;
+  type: string;
+  amount: number;
+  category: string;
+  note?: string;
+  entryDate: string;
+  createdAt: string;
+  createdBy: { displayName: string };
+}
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("id-ID", {
@@ -71,14 +80,16 @@ export default function ReportDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
-  const { user } = useAuth();
   const qc = useQueryClient();
   const [confirmingEntry, setConfirmingEntry] = useState<string | null>(null);
-  const [editingEntry, setEditingEntry] = useState<any | null>(null);
+  const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [showMembers, setShowMembers] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [confirmRemove, setConfirmRemove] = useState<any>(null);
+  const [confirmRemove, setConfirmRemove] = useState<{
+    userId: string;
+    displayName?: string;
+  } | null>(null);
   const [requestSent, setRequestSent] = useState(false);
   const requestEditor = useRequestEditorAccess();
   const manageMember = useManageMember();
@@ -94,7 +105,7 @@ export default function ReportDetailPage() {
   });
 
   const editEntry = useMutation({
-    mutationFn: async ({ entryId, data }: { entryId: string; data: any }) => {
+    mutationFn: async ({ entryId, data }: { entryId: string; data: Record<string, unknown> }) => {
       const res = await fetch(`/api/entries/${entryId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -179,15 +190,15 @@ export default function ReportDetailPage() {
     }
   }
   const sortedDays = Array.from(dayMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  const chartLabels = sortedDays.map(([d]) => {
-    const dt = new Date(d + "T00:00:00");
-    return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  });
-  let running = 0;
-  const chartAmounts = sortedDays.map(([, v]) => {
-    running += v;
-    return running;
-  });
+  const { 0: chartLabels, 1: chartAmounts } = sortedDays.reduce<[string[], number[]]>(
+    (acc, [d, v]) => {
+      const dt = new Date(d + "T00:00:00");
+      acc[0].push(dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
+      acc[1].push((acc[1].length > 0 ? acc[1][acc[1].length - 1] : 0) + v);
+      return acc;
+    },
+    [[], []]
+  );
 
   const weekMap = new Map<string, { income: number; expense: number }>();
   for (const e of allEntries) {
@@ -218,7 +229,7 @@ export default function ReportDetailPage() {
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 5);
 
-  const entriesByDate: Record<string, any[]> = {};
+  const entriesByDate: Record<string, Entry[]> = {};
   if (entriesQuery.data) {
     for (const entry of entriesQuery.data) {
       const key = entry.entryDate;
@@ -229,27 +240,27 @@ export default function ReportDetailPage() {
 
   return (
     <div className="h-full flex flex-col">
-      <header className="p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+       <header className="p-4 border-b border-(--border) bg-(--card) sticky top-0 z-10">
         <div className="flex items-center justify-between mb-2">
           <button
             onClick={() => router.back()}
-            className="p-1 -ml-1 hover:bg-gray-100 rounded-lg"
+            className="p-1 -ml-1 hover:bg-(--muted)rounded-lg"
           >
-            <ArrowLeft className="w-5 h-5 text-black" />
+            <ArrowLeft className="w-5 h-5 text-(--foreground)" />
           </button>
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowShare(true)} className="p-2 hover:bg-gray-100 rounded-lg">
-              <Share2 className="w-4 h-4 text-black" />
+            <button onClick={() => setShowShare(true)} className="p-2 hover:bg-(--muted)rounded-lg">
+              <Share2 className="w-4 h-4 text-(--foreground)" />
             </button>
             <Link
               href={`/settings?reportId=${id}`}
-              className="p-2 hover:bg-gray-100 rounded-lg"
+              className="p-2 hover:bg-(--muted)rounded-lg"
             >
-              <Settings className="w-4 h-4 text-black" />
+              <Settings className="w-4 h-4 text-(--foreground)" />
             </Link>
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-(--foreground)">
           {report?.name ?? "Report"}
         </h1>
         {report?.reportId && (
@@ -259,9 +270,9 @@ export default function ReportDetailPage() {
               setCopied(true);
               setTimeout(() => setCopied(false), 2000);
             }}
-            className="flex items-center gap-1.5 text-xs text-(--muted-foreground) hover:text-black mt-0.5 group"
+            className="flex items-center gap-1.5 text-xs text-(--muted-foreground) hover:text-(--foreground) mt-0.5 group"
           >
-            <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded group-hover:bg-gray-200">
+            <code className="text-xs bg-(--muted)px-1.5 py-0.5 rounded group-hover:bg-gray-200">
               {report.reportId}
             </code>
             {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
@@ -320,8 +331,8 @@ export default function ReportDetailPage() {
         </div>
       </header>
 
-      <Tab.Group>
-        <Tab.List className="flex border-b border-gray-200 bg-white px-2 sticky top-0 z-10">
+      <TabGroup>
+        <TabList className="flex border-b border-(--border) bg-(--card) px-2 sticky top-37.5 z-10">
           {tabs.map((tab) => (
             <Tab
               key={tab}
@@ -330,11 +341,11 @@ export default function ReportDetailPage() {
               {tab}
             </Tab>
           ))}
-        </Tab.List>
+        </TabList>
 
-        <Tab.Panels className="flex-1 overflow-y-auto">
-          <Tab.Panel className="p-4 space-y-6">
-            <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <TabPanels  className="flex-1 overflow-y-auto">
+          <TabPanel className="p-4 space-y-6">
+            <div className="bg-(--card) border border-(--border) rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-sm font-medium text-(--muted-foreground)">
                   Net Balance
@@ -360,7 +371,7 @@ export default function ReportDetailPage() {
               </div>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl p-4">
+            <div className="bg-(--card) border border-(--border) rounded-xl p-4">
               <h2 className="text-sm font-medium text-(--muted-foreground) mb-3">
                 Top Categories
               </h2>
@@ -374,7 +385,7 @@ export default function ReportDetailPage() {
                     key={cat.name}
                     className="flex items-center justify-between text-sm"
                   >
-                    <span className="text-gray-700">{cat.name}</span>
+                    <span className="text-(--foreground)">{cat.name}</span>
                     <div className="flex items-center gap-3">
                       <span className="font-medium">
                         {formatCurrency(cat.amount)}
@@ -388,7 +399,7 @@ export default function ReportDetailPage() {
               </div>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="bg-(--card) border border-(--border) rounded-xl overflow-hidden">
               <details className="group">
                 <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50">
                   <div className="flex items-center gap-2">
@@ -401,7 +412,7 @@ export default function ReportDetailPage() {
                 </summary>
                 <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3">
                   {insights && insights.length > 0 ? (
-                    insights.slice(0, 3).map((insight: any, i: number) => (
+                    insights.slice(0, 3).map((insight: { severity: string; title: string; body: string; basis?: string }, i: number) => (
                       <div key={i} className="text-sm">
                         <div className="flex items-start gap-2">
                           <span>
@@ -413,7 +424,7 @@ export default function ReportDetailPage() {
                           </span>
                           <div>
                             <p className="font-medium">{insight.title}</p>
-                            <p className="text-black text-xs mt-0.5">
+                            <p className="text-(--foreground) text-xs mt-0.5">
                               {insight.body}
                             </p>
                             {insight.basis && (
@@ -433,15 +444,15 @@ export default function ReportDetailPage() {
                 </div>
               </details>
             </div>
-          </Tab.Panel>
+          </TabPanel>
 
-          <Tab.Panel className="p-4">
+          <TabPanel className="p-4">
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--muted-foreground)" />
               <input
                 type="text"
                 placeholder="Search entries..."
-                className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-3 py-2 border border-(--border) rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             {entriesQuery.isLoading ? (
@@ -462,7 +473,7 @@ export default function ReportDetailPage() {
                       {entries.map((entry) => (
                         <div
                           key={entry.id}
-                          className="relative group flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg"
+                          className="relative group flex items-center justify-between p-3 bg-(--card) border border-gray-100 rounded-lg"
                         >
                           <div className="flex items-center gap-3">
                             <span
@@ -499,7 +510,7 @@ export default function ReportDetailPage() {
                                 onClick={() => {
                                   setEditingEntry(entry);
                                 }}
-                                className="p-1 hover:bg-gray-100 rounded"
+                                className="p-1 hover:bg-(--muted)rounded"
                               >
                                 <Pencil className="w-3.5 h-3.5 text-(--muted-foreground)" />
                               </button>
@@ -525,10 +536,10 @@ export default function ReportDetailPage() {
                 </p>
               </div>
             )}
-          </Tab.Panel>
+          </TabPanel>
 
-          <Tab.Panel className="p-4 space-y-6">
-            <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <TabPanel className="p-4 space-y-6">
+            <div className="bg-(--card) border border-(--border) rounded-xl p-4">
               <h2 className="text-sm font-medium text-(--muted-foreground) mb-3">
                 Income vs Expense
               </h2>
@@ -538,7 +549,7 @@ export default function ReportDetailPage() {
                 expense={barExpense.length > 0 ? barExpense : [0]}
               /></div>
             </div>
-            <div className="bg-white border border-gray-200 rounded-xl p-4">
+            <div className="bg-(--card) border border-(--border) rounded-xl p-4">
               <h2 className="text-sm font-medium text-(--muted-foreground) mb-3">
                 By Category
               </h2>
@@ -547,17 +558,17 @@ export default function ReportDetailPage() {
                 amounts={topCategories.map(c => c.amount)}
               /></div>
             </div>
-          </Tab.Panel>
+          </TabPanel>
 
 
 
-          <Tab.Panel className="p-4">
+          <TabPanel className="p-4">
             {activities.length > 0 ? (
               <div className="space-y-3">
-                {activities.map((event: any) => (
+                {activities.map((event: { id: string; eventType: string; actorName?: string; createdAt: string }) => (
                   <div
                     key={event.id}
-                    className="flex items-start gap-3 p-3 bg-white border border-gray-100 rounded-lg"
+                    className="flex items-start gap-3 p-3 bg-(--card) border border-gray-100 rounded-lg"
                   >
                     <span className="text-lg mt-0.5">
                       {getActivityIcon(event.eventType)}
@@ -565,7 +576,7 @@ export default function ReportDetailPage() {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">
                         {event.actorName}{" "}
-                        {event.eventType.replace(/\./g, " ")}
+                        {event.eventType.replaceAll(".", " ")}
                       </p>
                       <p className="text-xs text-(--muted-foreground) mt-0.5">
                         {timeAgo(event.createdAt)}
@@ -581,21 +592,21 @@ export default function ReportDetailPage() {
                 </p>
               </div>
             )}
-          </Tab.Panel>
-        </Tab.Panels>
-      </Tab.Group>
+          </TabPanel>
+        </TabPanels >
+      </TabGroup>
 
       {confirmingEntry && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-sm p-5 space-y-4 shadow-xl">
+          <div className="bg-(--card) rounded-xl w-full max-w-sm p-5 space-y-4 shadow-xl">
             <h3 className="text-lg font-bold">Delete Entry</h3>
-            <p className="text-sm text-black">
+            <p className="text-sm text-(--foreground)">
               Are you sure you want to delete this entry? It will be hidden from the report.
             </p>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setConfirmingEntry(null)}
-                className="px-4 py-2 border border-gray-200 rounded-lg text-sm"
+                className="px-4 py-2 border border-(--border) rounded-lg text-sm"
               >
                 Cancel
               </button>
@@ -628,15 +639,15 @@ export default function ReportDetailPage() {
 
       {showMembers && report && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-md p-5 space-y-4 shadow-xl max-h-[80vh] overflow-y-auto">
+          <div className="bg-(--card) rounded-xl w-full max-w-md p-5 space-y-4 shadow-xl max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold">Members</h3>
-              <button onClick={() => setShowMembers(false)} className="p-1 hover:bg-gray-100 rounded">
+              <button onClick={() => setShowMembers(false)} className="p-1 hover:bg-(--muted)rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-3">
-              {(report as any).members?.map((m: any) => (
+               {(report as unknown as { members?: Array<{ id: string; userId: string; role: string; displayName?: string }> }).members?.map((m) => (
                 <div key={m.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
@@ -709,10 +720,10 @@ export default function ReportDetailPage() {
 
       {showShare && report?.reportId && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white rounded-t-2xl sm:rounded-xl w-full max-w-sm p-5 space-y-4 shadow-xl">
+          <div className="bg-(--card) rounded-t-2xl sm:rounded-xl w-full max-w-sm p-5 space-y-4 shadow-xl">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold">Share Report</h3>
-              <button onClick={() => setShowShare(false)} className="p-1 hover:bg-gray-100 rounded">
+              <button onClick={() => setShowShare(false)} className="p-1 hover:bg-(--muted)rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -740,9 +751,9 @@ export default function ReportDetailPage() {
                   const text = encodeURIComponent(
                     `Join my report "${report.name}" on FinanceApp!\n\nReport code: ${report.reportId}\n\nOpen the app and go to Join Report to enter this code.`
                   );
-                  window.open(`https://wa.me/?text=${text}`, "_blank");
+                  globalThis.window.open(`https://wa.me/?text=${text}`, "_blank");
                 }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center gap-3 p-3 rounded-xl border border-(--border) hover:bg-gray-50 transition-colors"
               >
                 <span className="text-2xl">💬</span>
                 <div className="text-left">
@@ -752,7 +763,7 @@ export default function ReportDetailPage() {
               </button>
               <button
                 onClick={() => {
-                  const url = `${window.location.origin}/join/${report.reportId}`;
+                  const url = `${globalThis.location.origin}/join/${report.reportId}`;
                   if (navigator.share) {
                     navigator.share({ title: report.name, text: `Join my report "${report.name}"`, url });
                   } else {
@@ -760,7 +771,7 @@ export default function ReportDetailPage() {
                     toast("Invitation link copied to clipboard", "success");
                   }
                 }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center gap-3 p-3 rounded-xl border border-(--border) hover:bg-gray-50 transition-colors"
               >
                 <span className="text-2xl">🔗</span>
                 <div className="text-left">
@@ -774,7 +785,7 @@ export default function ReportDetailPage() {
       )}
 
       {confirmRemove && (
-        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-60 flex items-center justify-center p-4">
           <div className="bg-(--card) rounded-xl w-full max-w-sm p-5 space-y-4 shadow-xl">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold">Remove Member</h3>
@@ -829,9 +840,9 @@ function EditEntryModal({
   onSave,
   isPending,
 }: {
-  entry: any;
+  entry: Entry;
   onClose: () => void;
-  onSave: (data: any) => void;
+  onSave: (data: Record<string, unknown>) => void;
   isPending: boolean;
 }) {
   const [type, setType] = useState(entry.type);
@@ -840,23 +851,23 @@ function EditEntryModal({
   const [note, setNote] = useState(entry.note || "");
   const [entryDate, setEntryDate] = useState(entry.entryDate);
 
-  const displayAmount = amount ? parseInt(amount, 10).toLocaleString("id-ID") : "";
+  const displayAmount = amount ? Number.parseInt(amount, 10).toLocaleString("id-ID") : "";
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl w-full max-w-md p-5 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-(--card) rounded-xl w-full max-w-md p-5 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold">Edit Entry</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+          <button onClick={onClose} className="p-1 hover:bg-(--muted)rounded">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
+        <div className="flex gap-2 bg-(--muted)rounded-lg p-1">
           <button
             onClick={() => setType("expense")}
             className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-              type === "expense" ? "bg-white shadow-sm" : "text-(--muted-foreground)"
+              type === "expense" ? "bg-(--card) shadow-sm" : "text-(--muted-foreground)"
             }`}
           >
             Expense
@@ -864,7 +875,7 @@ function EditEntryModal({
           <button
             onClick={() => setType("income")}
             className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-              type === "income" ? "bg-white shadow-sm" : "text-(--muted-foreground)"
+              type === "income" ? "bg-(--card) shadow-sm" : "text-(--muted-foreground)"
             }`}
           >
             Income
@@ -878,7 +889,7 @@ function EditEntryModal({
             inputMode="numeric"
             value={displayAmount}
             onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
-            className="w-full py-2 px-3 border border-gray-300 rounded-lg text-xl font-semibold"
+            className="w-full py-2 px-3 border border-(--border) rounded-lg text-xl font-semibold"
             autoFocus
           />
         </div>
@@ -893,7 +904,7 @@ function EditEntryModal({
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                   category === cat
                     ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    : "bg-(--muted)text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 {cat}
@@ -909,7 +920,7 @@ function EditEntryModal({
               type="date"
               value={entryDate}
               onChange={(e) => setEntryDate(e.target.value)}
-              className="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm"
+              className="w-full py-2 px-3 border border-(--border) rounded-lg text-sm"
             />
           </div>
           <div>
@@ -918,18 +929,18 @@ function EditEntryModal({
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm"
+              className="w-full py-2 px-3 border border-(--border) rounded-lg text-sm"
               placeholder="Optional"
             />
           </div>
         </div>
 
         <div className="flex gap-2 justify-end pt-2">
-          <button onClick={onClose} className="px-4 py-2 border border-gray-200 rounded-lg text-sm">
+          <button onClick={onClose} className="px-4 py-2 border border-(--border) rounded-lg text-sm">
             Cancel
           </button>
           <button
-            onClick={() => onSave({ type, amount: parseFloat(amount) || 0, category, note, entryDate })}
+            onClick={() => onSave({ type, amount: Number.parseFloat(amount) || 0, category, note, entryDate })}
             disabled={isPending || !amount}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm disabled:opacity-50"
           >

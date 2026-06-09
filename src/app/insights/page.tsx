@@ -133,9 +133,9 @@ export default function InsightsPage() {
         <div className="flex items-center gap-3 mb-3">
           <button
             onClick={() => router.back()}
-            className="p-1 -ml-1 hover:bg-gray-100 rounded-lg"
+            className="p-1 -ml-1 hover:bg-(--muted)rounded-lg"
           >
-            <ArrowLeft className="w-5 h-5 text-black" />
+            <ArrowLeft className="w-5 h-5 text-(--foreground)" />
           </button>
           <h1 className="text-2xl font-bold">AI Insights</h1>
         </div>
@@ -143,13 +143,13 @@ export default function InsightsPage() {
         <div className="relative mb-2">
           <button
             onClick={() => setShowReports(!showReports)}
-            className="flex items-center gap-2 text-sm text-gray-700 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100"
+            className="flex items-center gap-2 text-sm text-gray-700 px-3 py-1.5 bg-gray-50 border border-(--border) rounded-lg hover:bg-gray-100"
           >
             {reportName}
             <ChevronDown className="w-3 h-3" />
           </button>
           {showReports && reports && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-56">
+            <div className="absolute top-full left-0 mt-1 bg-(--card) border border-(--border) rounded-lg shadow-lg z-10 w-56">
               {reports.map((r) => (
                 <button
                   key={r.id}
@@ -225,7 +225,7 @@ export default function InsightsPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-sm text-gray-900">
+                      <h3 className="font-semibold text-sm text-(--foreground)">
                         {insight.title}
                       </h3>
                       <span
@@ -238,7 +238,7 @@ export default function InsightsPage() {
                     </div>
                     <p className="text-sm text-gray-700">{insight.body}</p>
                     {insight.basis && (
-                      <p className="text-xs text-gray-500 mt-2 border-t border-gray-200 pt-2">
+                      <p className="text-xs text-gray-500 mt-2 border-t border-(--border) pt-2">
                         {insight.basis}
                       </p>
                     )}
@@ -251,7 +251,7 @@ export default function InsightsPage() {
       ) : (
         <div className="text-center py-16">
           <Lightbulb className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-          <p className="text-black font-medium">Not enough data yet.</p>
+          <p className="text-(--foreground) font-medium">Not enough data yet.</p>
           <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
             Add at least 2 weeks of expenses to get personalised insights.
           </p>

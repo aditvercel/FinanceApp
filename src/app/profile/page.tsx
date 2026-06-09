@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Shield,
   HelpCircle,
-  Info,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-provider";
 
@@ -24,20 +23,18 @@ function ProfileRow({ icon, label, onClick, danger }: ProfileRowProps) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-all text-left ${
+      className={`w-full flex items-center gap-3 p-4 bg-(--card) border border-(--border) rounded-xl hover:border-(--border) transition-all text-left ${
         danger ? "hover:border-red-300" : ""
       }`}
     >
       <div
-        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-          danger ? "bg-red-50" : "bg-gray-50"
-        }`}
+        className="w-10 h-10 rounded-lg flex items-center justify-center bg-(--card)"
       >
-        <span className={danger ? "text-red-600" : "text-black"}>{icon}</span>
+        <span className={danger ? "text-red-600" : "text-(--foreground)"}>{icon}</span>
       </div>
       <p
         className={`flex-1 font-medium text-sm ${
-          danger ? "text-red-600" : "text-gray-900"
+          danger ? "text-red-600" : "text-(--foreground)"
         }`}
       >
         {label}
@@ -78,18 +75,49 @@ export default function ProfilePage() {
     .toUpperCase()
     .slice(0, 2);
 
+  if (isLoading) {
+    return (
+      <div className="p-4 pb-16 space-y-6 animate-pulse">
+        <div className="h-7 w-20 bg-gray-200 rounded" />
+        <div className="flex items-center gap-4 p-4 border border-(--border) rounded-xl">
+          <div className="w-16 h-16 bg-gray-200 rounded-full shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="h-5 w-32 bg-gray-200 rounded" />
+            <div className="h-4 w-48 bg-gray-200 rounded" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center gap-3 p-4 border rounded-xl">
+              <div className="w-10 h-10 bg-gray-200 rounded-lg" />
+              <div className="flex-1 h-4 w-24 bg-gray-200 rounded" />
+              <div className="w-4 h-4 bg-gray-200 rounded" />
+            </div>
+          ))}
+          <div className="pt-4">
+            <div className="flex items-center gap-3 p-4 border rounded-xl">
+              <div className="w-10 h-10 bg-gray-200 rounded-lg" />
+              <div className="flex-1 h-4 w-20 bg-gray-200 rounded" />
+              <div className="w-4 h-4 bg-gray-200 rounded" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 pb-16">
       <header className="mb-6">
         <h1 className="text-2xl font-bold">Profile</h1>
       </header>
 
-      <div className="flex items-center gap-4 mb-8 p-4 bg-white border border-gray-200 rounded-xl">
+      <div className="flex items-center gap-4 mb-8 p-4 bg-(--card) border border-(--border) rounded-xl">
         <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold shrink-0">
           {user || authUser ? initials : <User className="w-8 h-8" />}
         </div>
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold text-gray-900 truncate">
+          <h2 className="text-xl font-semibold text-(--foreground) truncate">
             {displayName}
           </h2>
           <p className="text-gray-500 text-sm truncate">{email}</p>
@@ -98,17 +126,18 @@ export default function ProfilePage() {
 
       <div className="space-y-2">
         <ProfileRow
-          icon={<Settings className="w-5 h-5" />}
+          icon={<Settings className="w-5 h-5 text-(--foreground)"/>}
           label="Settings"
           onClick={() => router.push("/settings")}
         />
+        
         <ProfileRow
-          icon={<Shield className="w-5 h-5" />}
+          icon={<Shield className="w-5 h-5 text-(--foreground)" />}
           label="Privacy"
           onClick={() => router.push("/settings/privacy")}
         />
         <ProfileRow
-          icon={<HelpCircle className="w-5 h-5" />}
+          icon={<HelpCircle className="w-5 h-5 text-(--foreground)" />}
           label="Help & Support"
           onClick={() => router.push("/help")}
         />

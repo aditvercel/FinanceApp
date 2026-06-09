@@ -116,9 +116,9 @@ export default function HomePage() {
           </div>
         </header>
         <div className="space-y-4">
-          <div className="h-32 bg-gray-100 rounded-xl animate-pulse" />
-          <div className="h-24 bg-gray-100 rounded-xl animate-pulse" />
-          <div className="h-24 bg-gray-100 rounded-xl animate-pulse" />
+          <div className="h-32 bg-(--muted)rounded-xl animate-pulse" />
+          <div className="h-24 bg-(--muted)rounded-xl animate-pulse" />
+          <div className="h-24 bg-(--muted)rounded-xl animate-pulse" />
         </div>
       </div>
     );
@@ -196,7 +196,7 @@ export default function HomePage() {
               return (
                 <div
                   key={report.id}
-                  className="relative group bg-(--card) border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-sm transition-all"
+                  className="relative group bg-(--card) border border-(--border) rounded-xl hover:border-blue-300 hover:shadow-sm transition-all"
                 >
                   <Link
                     href={`/reports/${report.id}`}
@@ -250,7 +250,7 @@ export default function HomePage() {
                         setRenameValue(report.name);
                         setConfirming({ action: "edit", report });
                       }}
-                      className="p-1.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-sm"
+                      className="p-1.5 bg-(--card) border border-(--border) rounded-lg hover:bg-gray-50 shadow-sm"
                       title="Edit report name"
                     >
                       <Pencil className="w-3.5 h-3.5 text-(--muted-foreground)" />
@@ -272,7 +272,7 @@ export default function HomePage() {
             })}
           </div>
         ) : (
-          <div className="bg-gray-50 rounded-xl p-8 text-center border border-dashed border-gray-300">
+          <div className="bg-gray-50 rounded-xl p-8 text-center border border-dashed border-(--border)">
             <div className="text-4xl mb-3">📊</div>
             <p className="text-gray-700 font-medium mb-1">
               No reports yet
@@ -290,7 +290,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/onboarding"
-                className="inline-flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700"
+                className="inline-flex items-center gap-1 px-4 py-2 border border-(--border) rounded-lg text-sm text-gray-700"
               >
                 Show onboarding
               </Link>
@@ -411,7 +411,7 @@ export default function HomePage() {
               <>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold">Rename Report</h3>
-                  <button onClick={() => setConfirming(null)} className="p-1 hover:bg-gray-100 rounded">
+                  <button onClick={() => setConfirming(null)} className="p-1 hover:bg-(--muted)rounded">
                     <X className="w-5 h-5" />
                   </button>
                 </div>

@@ -75,11 +75,11 @@ export function VersionHistorySheet({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white w-full h-[85vh] rounded-t-xl flex flex-col">
+      <div className="bg-(--card) w-full h-[85vh] rounded-t-xl flex flex-col">
         <div className="flex items-center gap-3 px-4 py-3 border-b shrink-0">
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1 hover:bg-gray-100 rounded-lg"
+            className="p-1 hover:bg-(--muted)rounded-lg"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -135,13 +135,13 @@ export function VersionHistorySheet({
                     className={`rounded-lg border p-3 transition-colors ${
                       isCurrent
                         ? "border-blue-300 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
+                        : "border-(--border) hover:border-(--border)"
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                          <span className="text-xs font-semibold text-gray-500 bg-(--muted)px-1.5 py-0.5 rounded">
                             v{version.version}
                           </span>
                           {isCurrent && (
@@ -168,7 +168,7 @@ export function VersionHistorySheet({
                             Rp {version.amount.toLocaleString()}
                           </span>
                           <span className="text-xs text-gray-400">·</span>
-                          <span className="text-sm text-black">{version.category}</span>
+                          <span className="text-sm text-(--foreground)">{version.category}</span>
                           {version.lineItems && (
                             <>
                               <span className="text-xs text-gray-400">·</span>
@@ -284,9 +284,9 @@ function ConfirmRevertSheet({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-end">
-      <div className="bg-white w-full rounded-t-xl p-4">
+      <div className="bg-(--card) w-full rounded-t-xl p-4">
         <h3 className="text-lg font-bold mb-2">Restore v{targetVersion.version}?</h3>
-        <p className="text-sm text-black mb-4">
+        <p className="text-sm text-(--foreground) mb-4">
           This will create a new version (v{targetVersion.version !== undefined && currentVersion?.version !== undefined
             ? Math.max(targetVersion.version, currentVersion.version) + 1
             : "?"})
@@ -324,7 +324,7 @@ function ConfirmRevertSheet({
           <button
             onClick={onCancel}
             disabled={isPending}
-            className="flex-1 py-2.5 border border-gray-300 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+            className="flex-1 py-2.5 border border-(--border) rounded-xl font-medium hover:bg-gray-50 transition-colors"
           >
             Cancel
           </button>

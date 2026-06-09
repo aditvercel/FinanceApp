@@ -12,6 +12,7 @@ export interface RecurringTemplate {
   dayOfMonth: number | null;
   dayOfWeek: number | null;
   monthOfYear: number | null;
+  startDate: string;
   nextRunDate: string;
   isActive: boolean;
   createdAt: string;

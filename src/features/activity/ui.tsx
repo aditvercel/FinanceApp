@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { useCallback, useRef } from "react";
 import { useActivity } from "./hooks";
-
 const EVENT_ICONS: Record<string, { icon: typeof PlusCircle; color: string }> = {
   "entry.created": { icon: PlusCircle, color: "text-green-600" },
   "entry.edited": { icon: Pencil, color: "text-blue-600" },
@@ -44,6 +43,24 @@ function getDefaultIcon() {
   return { icon: PlusCircle, color: "text-gray-500" };
 }
 
+interface ActivityEvent {
+  id: string;
+  eventType: string;
+  actor?: { displayName: string };
+  metadata?: {
+    category?: string;
+    amount?: number;
+    previousAmount?: number;
+    version?: number;
+    targetDisplayName?: string;
+    role?: string;
+    percentage?: number;
+    budgetAmount?: number;
+    reportName?: string;
+  };
+  createdAt: string;
+}
+
 function formatTimeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -56,8 +73,8 @@ function formatTimeAgo(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function groupByDay(events: any[]) {
-  const groups: Record<string, any[]> = {};
+function groupByDay(events: ActivityEvent[]) {
+  const groups: Record<string, ActivityEvent[]> = {};
   for (const ev of events) {
     const day = new Date(ev.createdAt).toLocaleDateString("en-US", {
       weekday: "long",
@@ -71,7 +88,7 @@ function groupByDay(events: any[]) {
   return groups;
 }
 
-function getEventDescription(event: any) {
+function getEventDescription(event: ActivityEvent) {
   const meta = event.metadata || {};
   switch (event.eventType) {
     case "entry.created":
@@ -116,7 +133,7 @@ interface ActivityFeedProps {
 }
 
 export function ActivityFeed({ reportId }: ActivityFeedProps) {
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useActivity({ reportId });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useActivity({ reportId });
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   const allEvents = data?.pages.flat() || [];
@@ -132,6 +149,32 @@ export function ActivityFeed({ reportId }: ActivityFeedProps) {
     },
     [isFetchingNextPage, hasNextPage, fetchNextPage]
   );
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        {[1, 2, 3].map((day) => (
+          <div key={day} className="space-y-3">
+            <div className="h-3 w-32 bg-gray-200 rounded" />
+            <div className="space-y-1">
+              {[1, 2, 3, 4].map((item) => (
+                <div key={item} className="flex items-start gap-3 p-2">
+                  <div className="w-4 h-4 bg-gray-200 rounded mt-0.5 shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3.5 w-24 bg-gray-200 rounded" />
+                      <div className="h-3 w-12 bg-gray-200 rounded" />
+                    </div>
+                    <div className="h-3 w-48 bg-gray-200 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (allEvents.length === 0) {
     return (
@@ -152,7 +195,7 @@ export function ActivityFeed({ reportId }: ActivityFeedProps) {
             {day}
           </h3>
           <div className="space-y-1">
-            {events.map((event: any, idx: number) => {
+            {events.map((event: ActivityEvent, idx: number) => {
               const { icon: Icon, color } = EVENT_ICONS[event.eventType] || getDefaultIcon();
               const isLast = idx === events.length - 1;
               return (
@@ -173,7 +216,7 @@ export function ActivityFeed({ reportId }: ActivityFeedProps) {
                         {formatTimeAgo(event.createdAt)}
                       </span>
                     </div>
-                    <p className="text-sm text-black truncate">
+                    <p className="text-sm text-(--foreground) truncate">
                       {getEventDescription(event)}
                     </p>
                     {event.metadata?.reportName && (

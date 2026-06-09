@@ -1,5 +1,12 @@
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import type { SearchQuery, SearchResult, ParsedQuery } from "./contract";
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
 function parseQueryText(q: string): ParsedQuery {
   const parts = q.trim().split(/\s+/);
@@ -10,14 +17,14 @@ function parseQueryText(q: string): ParsedQuery {
   for (const part of parts) {
     if (part.startsWith(">")) {
       const val = Number(part.slice(1));
-      if (!isNaN(val) && val > 0) {
+      if (!Number.isNaN(val) && val > 0) {
         amountMin = val;
         continue;
       }
     }
     if (part.startsWith("<")) {
       const val = Number(part.slice(1));
-      if (!isNaN(val) && val > 0) {
+      if (!Number.isNaN(val) && val > 0) {
         amountMax = val;
         continue;
       }
@@ -26,7 +33,7 @@ function parseQueryText(q: string): ParsedQuery {
     if (rangeMatch) {
       const min = Number(rangeMatch[1]);
       const max = Number(rangeMatch[2]);
-      if (!isNaN(min) && !isNaN(max) && min > 0 && max > 0 && min <= max) {
+      if (!Number.isNaN(min) && !Number.isNaN(max) && min > 0 && max > 0 && min <= max) {
         amountMin = min;
         amountMax = max;
         continue;
@@ -42,7 +49,7 @@ export async function search(
   query: SearchQuery,
   userId: string
 ): Promise<SearchResult[]> {
-  const client = supabase;
+  const client = getSupabase();
   const parsed = parseQueryText(query.q);
 
   const effectiveAmountMin = parsed.amountMin ?? query.amountMin;
@@ -162,7 +169,7 @@ async function getEntryReportMap(
 ): Promise<Record<string, string>> {
   if (entryIds.length === 0) return {};
 
-  const client = supabase;
+  const client = getSupabase();
 
   const { data } = await client
     .from("entries")
@@ -181,7 +188,7 @@ async function getLineItemsForEntries(
 ): Promise<Record<string, Array<{ name: string; price: number }>>> {
   if (entryIds.length === 0) return {};
 
-  const client = supabase;
+  const client = getSupabase();
 
   const { data } = await client
     .from("entry_line_items")
@@ -211,7 +218,7 @@ async function getActiveSnapshotVersions(
 ): Promise<Record<string, number>> {
   if (entryIds.length === 0) return {};
 
-  const client = supabase;
+  const client = getSupabase();
 
   const { data } = await client
     .from("entry_snapshots")
@@ -231,7 +238,7 @@ async function getReportNames(
 ): Promise<Record<string, string>> {
   if (reportIds.length === 0) return {};
 
-  const client = supabase;
+  const client = getSupabase();
 
   const { data } = await client
     .from("reports")
@@ -248,7 +255,7 @@ async function getReportNames(
 async function getAccessibleReportIds(
   userId: string
 ): Promise<string[]> {
-  const client = supabase;
+  const client = getSupabase();
 
   const [ownedResult, memberResult] = await Promise.all([
     client.from("reports").select("id").eq("owner_id", userId),

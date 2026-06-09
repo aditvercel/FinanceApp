@@ -23,6 +23,21 @@ export async function createCategory(reportId: string, name: string, emoji: stri
   return json.data;
 }
 
+export async function updateCategory(
+  reportId: string,
+  categoryId: string,
+  data: { name?: string; emoji?: string },
+): Promise<ReportCategory> {
+  const res = await fetch(`/api/reports/${reportId}/categories/${categoryId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Failed to update category");
+  return json.data;
+}
+
 export async function deleteCategory(reportId: string, categoryId: string): Promise<void> {
   const res = await fetch(`/api/reports/${reportId}/categories/${categoryId}`, {
     method: "DELETE",

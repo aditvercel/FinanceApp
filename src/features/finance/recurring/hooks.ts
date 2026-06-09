@@ -33,7 +33,7 @@ export function useUpdateRecurringTemplate() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       updateRecurringTemplate(id, data),
-    onSuccess: () => {
+    onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ["recurring"] });
     },
   });

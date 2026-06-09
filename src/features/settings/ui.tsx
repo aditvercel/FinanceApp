@@ -4,12 +4,8 @@ import {
   Bell,
   ChevronRight,
   DollarSign,
-  Download,
   Moon,
-  Shield,
   Sun,
-  Trash2,
-  Upload,
   User,
 } from "lucide-react";
 import { useState } from "react";
@@ -52,35 +48,6 @@ export function SettingsList({ onNavigate }: SettingsListProps) {
     {
       title: "Data",
       items: [
-        {
-          icon: Download,
-          label: "Export All Data",
-          subtitle: "Full account backup",
-          onClick: () => onNavigate?.("/settings/export"),
-        },
-        {
-          icon: Upload,
-          label: "Import Data",
-          subtitle: "CSV import from other apps",
-          onClick: () => onNavigate?.("/settings/import"),
-        },
-        {
-          icon: Trash2,
-          label: "Recently Deleted",
-          subtitle: "Recover deleted reports (30 days)",
-          onClick: () => onNavigate?.("/settings/recently-deleted"),
-        },
-      ],
-    },
-    {
-      title: "Privacy",
-      items: [
-        {
-          icon: Shield,
-          label: "Receipt Image Storage",
-          rightText: settings.storeReceipts ? "On" : "Off",
-          onClick: () => updateSettings({ storeReceipts: !settings.storeReceipts }),
-        },
         {
           icon: User,
           label: "Account",
@@ -128,7 +95,7 @@ export function SettingsList({ onNavigate }: SettingsListProps) {
 
       {showCurrencyPicker && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="bg-white w-full rounded-t-xl p-4">
+          <div className="bg-(--card) w-full rounded-t-xl p-4">
             <h3 className="text-lg font-bold mb-4">Default Currency</h3>
             <div className="space-y-1">
               {CURRENCIES.map((cur) => (

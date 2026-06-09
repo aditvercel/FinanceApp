@@ -11,7 +11,6 @@ import {
   FileSpreadsheet,
   FileText,
   File,
-  ChevronRight,
   AlertCircle,
 } from "lucide-react";
 
@@ -30,7 +29,7 @@ const PERIODS = [
 
 export default function ExportPage() {
   const router = useRouter();
-  const { data: reports } = useReports();
+  const { data: reports, isLoading: reportsLoading } = useReports();
   const exportMutation = useExport();
 
   const [selectedReportId, setSelectedReportId] = useState("");
@@ -72,9 +71,10 @@ export default function ExportPage() {
 
       if (result.url) {
         setDownloadUrl(result.url);
-        window.open(result.url, "_blank");
+        globalThis.window.open(result.url, "_blank");
       }
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { data?: { suggestions: Array<{ label: string; startDate: string; endDate: string; estimatedCount: number }> }; message?: string };
       if (e.data?.suggestions) {
         setSuggestions(e.data.suggestions);
       } else {
@@ -94,9 +94,9 @@ export default function ExportPage() {
       <header className="flex items-center gap-3 mb-6">
         <button
           onClick={() => router.back()}
-          className="p-1 -ml-1 hover:bg-gray-100 rounded-lg"
+          className="p-1 -ml-1 hover:bg-(--muted)rounded-lg"
         >
-          <ArrowLeft className="w-5 h-5 text-black" />
+          <ArrowLeft className="w-5 h-5 text-(--foreground)" />
         </button>
         <h1 className="text-2xl font-bold">Export Report</h1>
       </header>
@@ -106,18 +106,22 @@ export default function ExportPage() {
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Report
           </label>
-          <select
-            value={selectedReportId}
-            onChange={(e) => setSelectedReportId(e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select a report...</option>
-            {reports?.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
+          {reportsLoading ? (
+            <div className="h-11 w-full bg-gray-200 rounded-lg animate-pulse" />
+          ) : (
+            <select
+              value={selectedReportId}
+              onChange={(e) => setSelectedReportId(e.target.value)}
+              className="w-full px-3 py-2.5 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select a report...</option>
+              {reports?.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         <div>
@@ -134,7 +138,7 @@ export default function ExportPage() {
                   className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                     format === f.value
                       ? "border-blue-600 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
+                      : "border-(--border) hover:border-(--border)"
                   }`}
                 >
                   <Icon
@@ -165,7 +169,7 @@ export default function ExportPage() {
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value as typeof period)}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2.5 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500"
           >
             {PERIODS.map((p) => (
               <option key={p.value} value={p.value}>
@@ -184,7 +188,7 @@ export default function ExportPage() {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2.5 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
@@ -195,7 +199,7 @@ export default function ExportPage() {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2.5 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -220,7 +224,7 @@ export default function ExportPage() {
                   <button
                     key={i}
                     onClick={() => applySuggestion(s)}
-                    className="w-full flex items-center justify-between p-2.5 bg-white border border-amber-200 rounded-lg text-sm hover:bg-amber-50"
+                    className="w-full flex items-center justify-between p-2.5 bg-(--card) border border-amber-200 rounded-lg text-sm hover:bg-amber-50"
                   >
                     <span className="font-medium">{s.label}</span>
                     <span className="text-gray-500">

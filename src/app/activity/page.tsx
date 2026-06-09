@@ -116,22 +116,22 @@ export default function ActivityPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
-            className="p-1 -ml-1 hover:bg-gray-100 rounded-lg"
+            className="p-1 -ml-1 hover:bg-(--muted)rounded-lg"
           >
-            <ArrowLeft className="w-5 h-5 text-black" />
+            <ArrowLeft className="w-5 h-5 text-(--foreground)" />
           </button>
           <h1 className="text-2xl font-bold">Activity</h1>
         </div>
         <div className="relative">
           <button
             onClick={() => setShowFilter(!showFilter)}
-            className="flex items-center gap-1 text-sm text-black px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50"
+            className="flex items-center gap-1 text-sm text-(--foreground) px-3 py-1.5 border border-(--border) rounded-lg hover:bg-gray-50"
           >
             {filterType === "All" ? "All Types" : filterType.split(".")[1] || filterType}
             <ChevronDown className="w-3 h-3" />
           </button>
           {showFilter && (
-            <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-48">
+            <div className="absolute right-0 top-full mt-1 bg-(--card) border border-(--border) rounded-lg shadow-lg z-10 w-48">
               {EVENT_TYPES.map((type) => (
                 <button
                   key={type}
@@ -166,7 +166,7 @@ export default function ActivityPage() {
                 {events.map((event: any) => (
                   <div
                     key={event.id}
-                    className="flex items-start gap-3 p-3 bg-white border border-gray-100 rounded-lg"
+                    className="flex items-start gap-3 p-3 bg-(--card) border border-gray-100 rounded-lg"
                   >
                     <span className="text-lg mt-0.5">
                       {getEventIcon(event.eventType)}
@@ -204,7 +204,7 @@ export default function ActivityPage() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-black">No activity yet.</p>
+          <p className="text-(--foreground)">No activity yet.</p>
           <p className="text-sm text-gray-500 mt-1">
             Changes to your reports will appear here.
           </p>

@@ -81,7 +81,7 @@ export function ExportForm({ reportId }: ExportFormProps) {
                         className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
                           format === f.value
                             ? "border-blue-600 bg-blue-50"
-                            : "border-gray-200 hover:border-gray-300"
+                            : "border-(--border) hover:border-(--border)"
                         }`}
                       >
                         <Icon className="w-6 h-6 text-gray-500" />
@@ -97,7 +97,7 @@ export function ExportForm({ reportId }: ExportFormProps) {
                 <select
                   value={period}
                   onChange={(e) => setPeriod(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  className="w-full px-3 py-2 border border-(--border) rounded-lg text-sm"
                 >
                   <option value="all">All time</option>
                   <option value="daily">Daily (last 30 days)</option>
@@ -113,7 +113,7 @@ export function ExportForm({ reportId }: ExportFormProps) {
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    className="w-full px-3 py-2 border border-(--border) rounded-lg text-sm"
                   />
                 </div>
                 <div>
@@ -122,7 +122,7 @@ export function ExportForm({ reportId }: ExportFormProps) {
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    className="w-full px-3 py-2 border border-(--border) rounded-lg text-sm"
                   />
                 </div>
               </div>
@@ -146,7 +146,7 @@ export function ExportForm({ reportId }: ExportFormProps) {
                           endDate: s.endDate,
                         })
                       }
-                      className="flex items-center justify-between w-full px-3 py-2 bg-white rounded-lg text-sm hover:bg-amber-50 transition-colors"
+                      className="flex items-center justify-between w-full px-3 py-2 bg-(--card) rounded-lg text-sm hover:bg-amber-50 transition-colors"
                     >
                       <span className="font-medium">{s.label}</span>
                       <span className="text-gray-500">~{s.estimatedCount} entries</span>
@@ -156,7 +156,7 @@ export function ExportForm({ reportId }: ExportFormProps) {
                     onClick={() => {
                       setFormat("csv");
                     }}
-                    className="flex items-center justify-between w-full px-3 py-2 bg-white rounded-lg text-sm hover:bg-amber-50 transition-colors"
+                    className="flex items-center justify-between w-full px-3 py-2 bg-(--card) rounded-lg text-sm hover:bg-amber-50 transition-colors"
                   >
                     <span className="font-medium">Or export as CSV (no limit)</span>
                   </button>
@@ -192,7 +192,7 @@ export function ExportForm({ reportId }: ExportFormProps) {
               <Download className="w-8 h-8 text-green-600" />
             </div>
             <h3 className="text-lg font-semibold mb-2">Export ready!</h3>
-            <p className="text-sm text-black mb-1">
+            <p className="text-sm text-(--foreground) mb-1">
               Your {result.format.toUpperCase()} export is ready for download.
             </p>
             <p className="text-xs text-gray-400 mb-6">
@@ -218,7 +218,7 @@ export function ExportForm({ reportId }: ExportFormProps) {
                   setError(null);
                   setSuggestions([]);
                 }}
-                className="px-6 py-2.5 border border-gray-300 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                className="px-6 py-2.5 border border-(--border) rounded-xl font-medium hover:bg-gray-50 transition-colors"
               >
                 Export again
               </button>

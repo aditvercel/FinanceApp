@@ -18,7 +18,8 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
-    const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    // use replaceAll to satisfy lint rule prefer String#replaceAll
+    const payload = parts[1].replaceAll("-", "+").replaceAll("_", "/");
     const padded = payload.padEnd(payload.length + ((4 - (payload.length % 4)) % 4), "=");
     return JSON.parse(Buffer.from(padded, "base64").toString("utf-8"));
   } catch {
@@ -77,7 +78,7 @@ export async function validateChatRequest(
 
   // 2. Request size check
   const contentLength = request.headers.get("content-length");
-  if (contentLength && parseInt(contentLength) > MAX_BODY_BYTES) {
+  if (contentLength && Number.parseInt(contentLength) > MAX_BODY_BYTES) {
     return reject(requestId, 413, "Request body too large", userId);
   }
 

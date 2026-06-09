@@ -89,12 +89,12 @@ export function SearchBar({ onSearch }: { onSearch: (params: Record<string, any>
           value={query}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search entries..."
-          className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+          className="w-full pl-10 pr-10 py-2.5 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
         />
         {query && (
           <button
             onClick={() => handleSearch("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-(--foreground)"
           >
             <X className="w-4 h-4" />
           </button>
@@ -103,7 +103,7 @@ export function SearchBar({ onSearch }: { onSearch: (params: Record<string, any>
           onClick={() => setShowFilters(!showFilters)}
           className={`absolute right-10 top-1/2 -translate-y-1/2 ${
             showFilters ? "text-blue-600" : "text-gray-400"
-          } hover:text-black`}
+          } hover:text-(--foreground)`}
         >
           <SlidersHorizontal className="w-4 h-4" />
         </button>
@@ -112,12 +112,12 @@ export function SearchBar({ onSearch }: { onSearch: (params: Record<string, any>
       {showFilters && (
         <div className="bg-gray-50 rounded-lg p-3 space-y-3">
           <div>
-            <label className="text-xs font-medium text-black mb-1 block">Amount</label>
+            <label className="text-xs font-medium text-(--foreground) mb-1 block">Amount</label>
             <div className="flex gap-2">
               <select
                 value={amountFilter}
                 onChange={(e) => setAmountFilter(e.target.value)}
-                className="text-sm border border-gray-300 rounded-lg px-2 py-1.5"
+                className="text-sm border border-(--border) rounded-lg px-2 py-1.5"
               >
                 {AMOUNT_FILTERS.map((f) => (
                   <option key={f}>{f}</option>
@@ -130,7 +130,7 @@ export function SearchBar({ onSearch }: { onSearch: (params: Record<string, any>
                     value={amountValue}
                     onChange={(e) => setAmountValue(e.target.value)}
                     placeholder="Min"
-                    className="w-24 text-sm border border-gray-300 rounded-lg px-2 py-1.5"
+                    className="w-24 text-sm border border-(--border) rounded-lg px-2 py-1.5"
                   />
                   <span className="text-gray-500">-</span>
                   <input
@@ -138,7 +138,7 @@ export function SearchBar({ onSearch }: { onSearch: (params: Record<string, any>
                     value={amountValue2}
                     onChange={(e) => setAmountValue2(e.target.value)}
                     placeholder="Max"
-                    className="w-24 text-sm border border-gray-300 rounded-lg px-2 py-1.5"
+                    className="w-24 text-sm border border-(--border) rounded-lg px-2 py-1.5"
                   />
                 </div>
               ) : amountFilter !== "Any" ? (
@@ -147,7 +147,7 @@ export function SearchBar({ onSearch }: { onSearch: (params: Record<string, any>
                   value={amountValue}
                   onChange={(e) => setAmountValue(e.target.value)}
                   placeholder="Amount"
-                  className="w-32 text-sm border border-gray-300 rounded-lg px-2 py-1.5"
+                  className="w-32 text-sm border border-(--border) rounded-lg px-2 py-1.5"
                 />
               ) : null}
             </div>
@@ -155,11 +155,11 @@ export function SearchBar({ onSearch }: { onSearch: (params: Record<string, any>
 
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="text-xs font-medium text-black mb-1 block">Category</label>
+              <label className="text-xs font-medium text-(--foreground) mb-1 block">Category</label>
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5"
+                className="w-full text-sm border border-(--border) rounded-lg px-2 py-1.5"
               >
                 <option value="">All</option>
                 {CATEGORIES.map((c) => (
@@ -168,11 +168,11 @@ export function SearchBar({ onSearch }: { onSearch: (params: Record<string, any>
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-black mb-1 block">Type</label>
+              <label className="text-xs font-medium text-(--foreground) mb-1 block">Type</label>
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5"
+                className="w-full text-sm border border-(--border) rounded-lg px-2 py-1.5"
               >
                 <option value="">All</option>
                 <option value="income">Income</option>
@@ -180,11 +180,11 @@ export function SearchBar({ onSearch }: { onSearch: (params: Record<string, any>
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-black mb-1 block">Date</label>
+              <label className="text-xs font-medium text-(--foreground) mb-1 block">Date</label>
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5"
+                className="w-full text-sm border border-(--border) rounded-lg px-2 py-1.5"
               >
                 <option value="">Any time</option>
                 <option value="today">Today</option>
@@ -206,7 +206,7 @@ export function SearchResults({ params }: { params: Record<string, any> }) {
     return (
       <div className="space-y-3 mt-4">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="animate-pulse bg-white rounded-lg border p-3 space-y-2">
+          <div key={i} className="animate-pulse bg-(--card) rounded-lg border p-3 space-y-2">
             <div className="h-4 bg-gray-200 rounded w-1/3" />
             <div className="h-3 bg-gray-200 rounded w-2/3" />
             <div className="h-3 bg-gray-200 rounded w-1/2" />
@@ -252,7 +252,7 @@ export function SearchResults({ params }: { params: Record<string, any> }) {
       {results.map((entry: any) => (
         <div
           key={entry.id}
-          className="bg-white rounded-lg border p-3 hover:border-blue-300 transition-colors cursor-pointer"
+          className="bg-(--card) rounded-lg border p-3 hover:border-blue-300 transition-colors cursor-pointer"
         >
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
@@ -275,7 +275,7 @@ export function SearchResults({ params }: { params: Record<string, any> }) {
                 {entry.merchant && <span className="text-gray-500 font-normal"> — {entry.merchant}</span>}
               </p>
               {entry.note && (
-                <p className="text-sm text-black truncate mt-0.5">{entry.note}</p>
+                <p className="text-sm text-(--foreground) truncate mt-0.5">{entry.note}</p>
               )}
               {entry.lineItems && entry.lineItems.length > 0 && (
                 <p className="text-xs text-gray-400 mt-1">

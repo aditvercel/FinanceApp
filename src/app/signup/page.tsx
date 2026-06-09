@@ -23,7 +23,7 @@ export default function SignupPage() {
   useEffect(() => {
     if (isAuthenticated && !authLoading && !emailSent) {
       const onboardingDone =
-        typeof window !== "undefined" &&
+        globalThis.window !== undefined &&
         localStorage.getItem("onboarding_completed") === "true";
       router.replace(onboardingDone ? "/" : "/onboarding");
     }
@@ -65,7 +65,7 @@ export default function SignupPage() {
         setEmailSent(true);
       } else {
         const onboardingDone =
-          typeof window !== "undefined" &&
+          globalThis.window !== undefined &&
           localStorage.getItem("onboarding_completed") === "true";
         router.replace(onboardingDone ? "/" : "/onboarding");
       }
@@ -78,7 +78,7 @@ export default function SignupPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-(--card)">
         <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
       </div>
     );
@@ -86,10 +86,10 @@ export default function SignupPage() {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-(--card) flex flex-col items-center justify-center px-6">
         <div className="text-center max-w-sm">
           <div className="text-5xl mb-4">📧</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h1>
+          <h1 className="text-2xl font-bold text-(--foreground) mb-2">Check your email</h1>
           <p className="text-gray-500 mb-6">
             We sent a verification link to <strong>{email}</strong>.
             Click the link to activate your account, then sign in.
@@ -110,20 +110,20 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-(--card) flex flex-col">
       <div className="p-4">
         <button
           onClick={() => router.back()}
-          className="p-1 -ml-1 hover:bg-gray-100 rounded-lg"
+          className="p-1 -ml-1 hover:bg-(--muted)rounded-lg"
         >
-          <ArrowLeft className="w-5 h-5 text-black" />
+          <ArrowLeft className="w-5 h-5 text-(--foreground)" />
         </button>
       </div>
 
       <div className="flex-1 flex flex-col px-6 pb-8">
         <div className="text-center mb-8">
           <div className="text-5xl mb-4">+</div>
-          <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
+          <h1 className="text-2xl font-bold text-(--foreground)">Create your account</h1>
           <p className="text-gray-500 mt-1">Start tracking your finances in minutes</p>
         </div>
 
@@ -138,7 +138,7 @@ export default function SignupPage() {
             <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-1.5">Name</label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input ref={nameRef} id="displayName" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name" autoCapitalize="words" autoComplete="name" className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+              <input ref={nameRef} id="displayName" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name" autoCapitalize="words" autoComplete="name" className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-(--border) rounded-xl text-(--foreground) placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
           </div>
 
@@ -146,7 +146,7 @@ export default function SignupPage() {
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoCapitalize="off" autoComplete="email" className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoCapitalize="off" autoComplete="email" className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-(--border) rounded-xl text-(--foreground) placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
           </div>
 
@@ -154,8 +154,8 @@ export default function SignupPage() {
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" autoComplete="new-password" className="w-full pl-10 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
+              <input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" autoComplete="new-password" className="w-full pl-10 pr-12 py-3 bg-gray-50 border border-(--border) rounded-xl text-(--foreground) placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-(--foreground)">
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
@@ -165,7 +165,7 @@ export default function SignupPage() {
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">Confirm password</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input id="confirmPassword" type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat your password" autoComplete="new-password" className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+              <input id="confirmPassword" type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat your password" autoComplete="new-password" className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-(--border) rounded-xl text-(--foreground) placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
           </div>
 

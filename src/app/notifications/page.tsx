@@ -85,9 +85,9 @@ export default function NotificationsPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
-            className="p-1 -ml-1 hover:bg-gray-100 rounded-lg"
+            className="p-1 -ml-1 hover:bg-(--muted)rounded-lg"
           >
-            <ArrowLeft className="w-5 h-5 text-black" />
+            <ArrowLeft className="w-5 h-5 text-(--foreground)" />
           </button>
           <h1 className="text-2xl font-bold">Notifications</h1>
           {unread.length > 0 && (
@@ -126,14 +126,14 @@ export default function NotificationsPage() {
                     <button
                       key={n.id}
                       onClick={() => handleMarkRead(n)}
-                      className="w-full flex items-start gap-3 p-4 bg-white border border-blue-100 rounded-xl shadow-sm text-left hover:bg-blue-50 transition-colors"
+                      className="w-full flex items-start gap-3 p-4 bg-(--card) border border-blue-100 rounded-xl shadow-sm text-left hover:bg-blue-50 transition-colors"
                     >
                       <div className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center text-lg shrink-0`}>
                         {icon}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-sm text-gray-900">{n.title}</p>
-                        <p className="text-xs text-black mt-0.5 line-clamp-2">{n.body}</p>
+                        <p className="font-medium text-sm text-(--foreground)">{n.title}</p>
+                        <p className="text-xs text-(--foreground) mt-0.5 line-clamp-2">{n.body}</p>
                         <p className="text-xs text-gray-400 mt-1">{timeAgo(n.createdAt)}</p>
                       </div>
                       <div className="w-2 h-2 rounded-full bg-blue-600 shrink-0 mt-2" />
@@ -159,14 +159,14 @@ export default function NotificationsPage() {
                         markRead.mutate(n.id);
                         if (n.actionUrl) router.push(n.actionUrl);
                       }}
-                      className="w-full flex items-start gap-3 p-4 bg-white border border-gray-100 rounded-lg text-left hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-start gap-3 p-4 bg-(--card) border border-gray-100 rounded-lg text-left hover:bg-gray-50 transition-colors"
                     >
                       <div className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center text-lg shrink-0`}>
                         {icon}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-sm text-gray-900">{n.title}</p>
-                        <p className="text-xs text-black mt-0.5 line-clamp-2">{n.body}</p>
+                        <p className="font-medium text-sm text-(--foreground)">{n.title}</p>
+                        <p className="text-xs text-(--foreground) mt-0.5 line-clamp-2">{n.body}</p>
                         <p className="text-xs text-gray-400 mt-1">{timeAgo(n.createdAt)}</p>
                       </div>
                     </button>
@@ -179,7 +179,7 @@ export default function NotificationsPage() {
       ) : (
         <div className="text-center py-16">
           <Bell className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-          <p className="text-black font-medium">No notifications</p>
+          <p className="text-(--foreground) font-medium">No notifications</p>
           <p className="text-sm text-gray-500 mt-1">
             You are all caught up!
           </p>

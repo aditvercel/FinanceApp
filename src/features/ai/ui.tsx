@@ -85,7 +85,7 @@ export function ChatUI({ messages, onSend, isLoading }: ChatUIProps) {
               className={`max-w-[80%] px-4 py-2.5 rounded-2xl ${
                 msg.role === "user"
                   ? "bg-blue-600 text-white rounded-br-md"
-                  : "bg-gray-100 text-gray-900 rounded-bl-md"
+                  : "bg-(--muted)text-(--foreground) rounded-bl-md"
               }`}
             >
               <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
@@ -102,7 +102,7 @@ export function ChatUI({ messages, onSend, isLoading }: ChatUIProps) {
             </div>
             {msg.role === "user" && (
               <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
-                <User className="w-4 h-4 text-black" />
+                <User className="w-4 h-4 text-(--foreground)" />
               </div>
             )}
           </div>
@@ -111,14 +111,14 @@ export function ChatUI({ messages, onSend, isLoading }: ChatUIProps) {
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t p-4 bg-white">
+      <form onSubmit={handleSubmit} className="border-t p-4 bg-(--card)">
         <div className="flex gap-2">
           <input
             ref={inputRef}
             type="text"
             placeholder="Type a message..."
             disabled={isLoading}
-            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+            className="flex-1 px-4 py-2.5 border border-(--border) rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
           />
           <button
             type="submit"

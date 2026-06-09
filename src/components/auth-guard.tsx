@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 const PUBLIC_PATHS = ["/login", "/signup", "/onboarding"];
 
 function isOnboardingCompleted(): boolean {
-  if (typeof window === "undefined") return true;
+  if (globalThis.window === undefined) return true;
   return localStorage.getItem("onboarding_completed") === "true";
 }
 

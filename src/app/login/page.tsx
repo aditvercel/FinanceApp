@@ -21,7 +21,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
       const onboardingDone =
-        typeof window !== "undefined" &&
+        globalThis.window !== undefined &&
         localStorage.getItem("onboarding_completed") === "true";
       router.replace(onboardingDone ? "/" : "/onboarding");
     }
@@ -49,7 +49,7 @@ export default function LoginPage() {
     try {
       await login(email.trim(), password);
       const onboardingDone =
-        typeof window !== "undefined" &&
+        globalThis.window !== undefined &&
         localStorage.getItem("onboarding_completed") === "true";
       router.replace(onboardingDone ? "/" : "/onboarding");
     } catch (err: any) {
@@ -61,7 +61,7 @@ export default function LoginPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-(--card)">
         <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
       </div>
     );
@@ -72,14 +72,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-(--card) flex flex-col">
       {/* Header */}
       <div className="p-4">
         <button
           onClick={() => router.back()}
-          className="p-1 -ml-1 hover:bg-gray-100 rounded-lg"
+          className="p-1 -ml-1 hover:bg-(--muted)rounded-lg"
         >
-          <ArrowLeft className="w-5 h-5 text-black" />
+          <ArrowLeft className="w-5 h-5 text-(--foreground)" />
         </button>
       </div>
 
@@ -87,7 +87,7 @@ export default function LoginPage() {
         {/* Branding */}
         <div className="text-center mb-8">
           <div className="text-5xl mb-4">💰</div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
+          <h1 className="text-2xl font-bold text-(--foreground)">Welcome back</h1>
           <p className="text-gray-500 mt-1">Sign in to your Finance Tracker account</p>
         </div>
 
@@ -115,7 +115,7 @@ export default function LoginPage() {
                 placeholder="you@example.com"
                 autoCapitalize="off"
                 autoComplete="email"
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-(--border) rounded-xl text-(--foreground) placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
           </div>
@@ -133,12 +133,12 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 autoComplete="current-password"
-                className="w-full pl-10 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full pl-10 pr-12 py-3 bg-gray-50 border border-(--border) rounded-xl text-(--foreground) placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-(--foreground)"
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>

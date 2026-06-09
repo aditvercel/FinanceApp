@@ -25,11 +25,11 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow"
+      className="w-full text-left bg-(--card) rounded-xl border border-(--border) p-4 hover:shadow-md transition-shadow"
     >
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="font-semibold text-gray-900">{report.name}</h3>
+          <h3 className="font-semibold text-(--foreground)">{report.name}</h3>
           <p className="text-sm text-gray-500">
             {formatCurrency(report.totalExpense, report.currency)} spent
           </p>
@@ -117,7 +117,7 @@ export function ReportList({
         </button>
         <button
           onClick={onJoin}
-          className="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-50 transition-colors"
+          className="flex-1 py-2.5 px-4 border border-(--border) text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-50 transition-colors"
         >
           + Join Report
         </button>

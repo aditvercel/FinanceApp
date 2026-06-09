@@ -13,6 +13,7 @@ export type TemplateRow = {
   day_of_month: number | null;
   day_of_week: number | null;
   month_of_year: number | null;
+  start_date: string;
   next_run_date: string;
   is_active: boolean;
   created_at: string;
@@ -29,21 +30,29 @@ export async function getTemplates(reportId: string): Promise<TemplateRow[]> {
   return data ?? [];
 }
 
-function computeNextRunDate(data: CreateRecurring): string {
-  const start = new Date(data.startDate);
+export function recalcNextRunDate(data: {
+  startDate: string;
+  interval: "weekly" | "monthly" | "yearly";
+  dayOfWeek?: number | null;
+  dayOfMonth?: number | null;
+  monthOfYear?: number | null;
+}): string {
+  const start = new Date(data.startDate + "T00:00:00");
   const now = new Date();
   let candidate = new Date(start);
 
+  now.setHours(23, 59, 59, 999);
+
   if (candidate > now) {
-    return candidate.toISOString().split("T")[0];
+    return formatDate(candidate);
   }
 
   while (candidate <= now) {
     switch (data.interval) {
       case "weekly": {
-        const dayOfWeek = data.dayOfWeek ?? candidate.getDay();
-        candidate.setDate(candidate.getDate() + 7);
-        candidate.setDate(candidate.getDate() - candidate.getDay() + dayOfWeek);
+        const targetDay = data.dayOfWeek ?? start.getDay();
+        const daysUntilTarget = (targetDay - candidate.getDay() + 7) % 7 || 7;
+        candidate.setDate(candidate.getDate() + daysUntilTarget);
         break;
       }
       case "monthly": {
@@ -63,14 +72,21 @@ function computeNextRunDate(data: CreateRecurring): string {
     }
   }
 
-  return candidate.toISOString().split("T")[0];
+  return formatDate(candidate);
+}
+
+function formatDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 export async function createTemplate(
   data: CreateRecurring,
   userId: string
 ): Promise<TemplateRow> {
-  const nextRunDate = computeNextRunDate(data);
+  const nextRunDate = recalcNextRunDate(data);
 
   const { data: row, error } = await supabase
     .from("recurring_templates")
@@ -85,6 +101,7 @@ export async function createTemplate(
       day_of_month: data.dayOfMonth ?? null,
       day_of_week: data.dayOfWeek ?? null,
       month_of_year: data.monthOfYear ?? null,
+      start_date: data.startDate,
       next_run_date: nextRunDate,
     })
     .select()
@@ -94,19 +111,33 @@ export async function createTemplate(
   return row;
 }
 
+export async function getTemplateById(id: string): Promise<TemplateRow | null> {
+  const { data, error } = await supabase
+    .from("recurring_templates")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function updateTemplate(
   id: string,
-  data: Partial<{
-    amount: number;
-    category: string;
-    note: string | null;
-    is_active: boolean;
-    next_run_date: string;
-  }>
+  data: Record<string, any>
 ): Promise<void> {
   const { error } = await supabase
     .from("recurring_templates")
     .update(data)
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteTemplate(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("recurring_templates")
+    .delete()
     .eq("id", id);
 
   if (error) throw new Error(error.message);

@@ -60,7 +60,7 @@ export function JoinReportSheet({ open, onOpenChange }: JoinReportSheetProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white w-full rounded-t-xl p-4 overflow-y-auto">
+      <div className="bg-(--card) w-full rounded-t-xl p-4 overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Join a Report</h2>
           <button
@@ -70,7 +70,7 @@ export function JoinReportSheet({ open, onOpenChange }: JoinReportSheetProps) {
               setError(null);
               setConfirmData(null);
             }}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-2 hover:bg-(--muted)rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -89,7 +89,7 @@ export function JoinReportSheet({ open, onOpenChange }: JoinReportSheetProps) {
                   value={code}
                   onChange={(e) => handleInputChange(e.target.value)}
                   placeholder="e.g. RPT_XK9MP2"
-                  className="w-full pl-10 pr-3 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent tracking-widest font-mono"
+                  className="w-full pl-10 pr-3 py-3 text-lg border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent tracking-widest font-mono"
                   autoFocus
                   maxLength={20}
                 />
@@ -121,7 +121,7 @@ export function JoinReportSheet({ open, onOpenChange }: JoinReportSheetProps) {
                 <CheckCircle2 className="w-5 h-5 text-blue-600" />
                 <span className="font-medium text-blue-900">Report found</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-(--foreground)">
                 {confirmData.name}
               </h3>
               <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
@@ -142,7 +142,7 @@ export function JoinReportSheet({ open, onOpenChange }: JoinReportSheetProps) {
                   setConfirmData(null);
                   setError(null);
                 }}
-                className="flex-1 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex-1 py-2.5 border border-(--border) rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Back
               </button>

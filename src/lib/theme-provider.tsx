@@ -15,7 +15,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const stored = localStorage.getItem("theme") as Theme | null;
-    const preferred = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    const preferred = globalThis.window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     const initial = stored ?? preferred;
     setTheme(initial);
     document.documentElement.classList.toggle("dark", initial === "dark");

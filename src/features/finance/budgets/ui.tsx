@@ -47,7 +47,7 @@ export function BudgetList({ budgets, reportId, onAdd }: BudgetListProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-gray-900">Budgets</h3>
+        <h3 className="font-semibold text-(--foreground)">Budgets</h3>
         <button
           onClick={onAdd}
           className="flex items-center gap-1 text-sm text-blue-600 font-medium hover:text-blue-700"
@@ -67,10 +67,10 @@ export function BudgetList({ budgets, reportId, onAdd }: BudgetListProps) {
         {budgets.map((budget) => (
           <div
             key={budget.id}
-            className="bg-white border border-gray-200 rounded-lg p-3"
+            className="bg-(--card) border border-(--border) rounded-lg p-3"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="font-medium text-sm text-gray-900">
+              <span className="font-medium text-sm text-(--foreground)">
                 {budget.category}
               </span>
               <span
@@ -150,8 +150,8 @@ export function BudgetForm({
   if (!open) return null;
 
   const handleSubmit = async () => {
-    const numAmount = parseFloat(amount);
-    if (!category || isNaN(numAmount) || numAmount <= 0) return;
+    const numAmount = Number.parseFloat(amount);
+    if (!category || Number.isNaN(numAmount) || numAmount <= 0) return;
 
     try {
       await upsertMutation.mutateAsync({
@@ -168,14 +168,14 @@ export function BudgetForm({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white w-full rounded-t-xl p-4">
+      <div className="bg-(--card) w-full rounded-t-xl p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold">
             {existing ? "Edit Budget" : "Set Budget"}
           </h3>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-2 hover:bg-(--muted)rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -194,7 +194,7 @@ export function BudgetForm({
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                     category === cat
                       ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-black hover:bg-gray-200"
+                      : "bg-(--muted)text-(--foreground) hover:bg-gray-200"
                   }`}
                 >
                   {cat}
@@ -215,7 +215,7 @@ export function BudgetForm({
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-3 py-2.5 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="0"
                 autoFocus
                 min="0"

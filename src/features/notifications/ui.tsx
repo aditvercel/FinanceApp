@@ -83,7 +83,7 @@ export function NotificationList() {
 
   return (
     <div>
-      <div className="flex items-center justify-between px-4 py-3 border-b sticky top-0 bg-white z-10">
+      <div className="flex items-center justify-between px-4 py-3 border-b sticky top-0 bg-(--card) z-10">
         <h2 className="text-lg font-bold">Notifications</h2>
         {unread.length > 0 && (
           <button
@@ -140,7 +140,7 @@ function NotificationCard({
       }`}
       onClick={() => {
         if (!notification.isRead && onMarkRead) onMarkRead();
-        if (notification.actionUrl) window.location.href = notification.actionUrl;
+        if (notification.actionUrl) globalThis.window.location.href = notification.actionUrl;
       }}
       role="button"
       tabIndex={0}
@@ -155,7 +155,7 @@ function NotificationCard({
           </p>
           {!notification.isRead && <span className="w-2 h-2 bg-blue-600 rounded-full shrink-0" />}
         </div>
-        <p className="text-sm text-black mt-0.5 line-clamp-2">{notification.body}</p>
+        <p className="text-sm text-(--foreground) mt-0.5 line-clamp-2">{notification.body}</p>
         <p className="text-xs text-gray-400 mt-1">{formatTime(notification.createdAt)}</p>
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Plus,
   X,
@@ -9,13 +9,14 @@ import {
   Pause,
   Play,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import type { RecurringTemplate, RecurrenceInterval } from "./model";
 import {
   useCreateRecurringTemplate,
   useUpdateRecurringTemplate,
-  useDeleteRecurringTemplate,
 } from "./hooks";
+import { useCategories } from "@/features/finance/categories/hooks";
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("id-ID", {
@@ -32,9 +33,20 @@ const INTERVAL_LABELS: Record<RecurrenceInterval, string> = {
   yearly: "Yearly",
 };
 
+const FALLBACK_CATEGORIES = [
+  "Food",
+  "Transport",
+  "Utilities",
+  "Shopping",
+  "Health",
+  "Entertainment",
+  "Other",
+];
+
 interface TemplateListProps {
   templates: RecurringTemplate[];
   onAdd: () => void;
+  onEdit: (template: RecurringTemplate) => void;
   onToggle: (id: string, isActive: boolean) => void;
   onDelete: (id: string) => void;
 }
@@ -42,13 +54,14 @@ interface TemplateListProps {
 export function TemplateList({
   templates,
   onAdd,
+  onEdit,
   onToggle,
   onDelete,
 }: TemplateListProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-gray-900">Recurring</h3>
+        <h3 className="font-semibold text-(--foreground)">Recurring</h3>
         <button
           onClick={onAdd}
           className="flex items-center gap-1 text-sm text-blue-600 font-medium hover:text-blue-700"
@@ -68,14 +81,14 @@ export function TemplateList({
         {templates.map((template) => (
           <div
             key={template.id}
-            className={`bg-white border rounded-lg p-3 ${
-              template.isActive ? "border-gray-200" : "border-gray-100 opacity-60"
+            className={`bg-(--card) border rounded-lg p-3 ${
+              template.isActive ? "border-(--border)" : "border-gray-100 opacity-60"
             }`}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm text-gray-900">
+                  <span className="font-medium text-sm text-(--foreground)">
                     {template.category}
                   </span>
                   <span
@@ -110,6 +123,12 @@ export function TemplateList({
 
               <div className="flex items-center gap-1 ml-2">
                 <button
+                  onClick={() => onEdit(template)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => onToggle(template.id, !template.isActive)}
                   className={`p-1.5 rounded-lg transition-colors ${
                     template.isActive
@@ -138,44 +157,87 @@ export function TemplateList({
   );
 }
 
-const CATEGORIES = [
-  "Food",
-  "Transport",
-  "Utilities",
-  "Shopping",
-  "Health",
-  "Entertainment",
-  "Other",
-];
-
 interface TemplateFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   reportId: string;
+  editingTemplate?: RecurringTemplate | null;
 }
 
-export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps) {
-  const [type, setType] = useState<"income" | "expense">("expense");
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState(CATEGORIES[0]);
-  const [note, setNote] = useState("");
-  const [interval, setInterval] = useState<RecurrenceInterval>("monthly");
-  const [dayOfMonth, setDayOfMonth] = useState<number>(1);
-  const [dayOfWeek, setDayOfWeek] = useState<number>(1);
-  const [monthOfYear, setMonthOfYear] = useState<number>(1);
+export function TemplateForm({ open, onOpenChange, reportId, editingTemplate }: TemplateFormProps) {
+  const [type, setType] = useState<"income" | "expense">(
+    () => editingTemplate?.type ?? "expense"
+  );
+  const [amount, setAmount] = useState(
+    () => (editingTemplate ? String(editingTemplate.amount) : "")
+  );
+  const [category, setCategory] = useState(
+    () => editingTemplate?.category ?? FALLBACK_CATEGORIES[0]
+  );
+  const [note, setNote] = useState(
+    () => editingTemplate?.note ?? ""
+  );
+  const [interval, setInterval] = useState<RecurrenceInterval>(
+    () => editingTemplate?.interval ?? "monthly"
+  );
+  const [dayOfMonth, setDayOfMonth] = useState<number>(
+    () => editingTemplate?.dayOfMonth ?? 1
+  );
+  const [dayOfWeek, setDayOfWeek] = useState<number>(
+    () => editingTemplate?.dayOfWeek ?? 1
+  );
+  const [monthOfYear, setMonthOfYear] = useState<number>(
+    () => editingTemplate?.monthOfYear ?? 1
+  );
   const [startDate, setStartDate] = useState(
-    () => new Date().toISOString().split("T")[0]
+    () => editingTemplate?.nextRunDate ?? new Date().toISOString().split("T")[0]
   );
 
   const createMutation = useCreateRecurringTemplate();
+  const updateMutation = useUpdateRecurringTemplate();
+
+  const { data: fetchedCategories } = useCategories(reportId);
+  const categories =
+    fetchedCategories && fetchedCategories.length > 0
+      ? fetchedCategories.map((c: { name: string }) => c.name)
+      : FALLBACK_CATEGORIES;
+
+
+
+  const resetForm = useCallback(() => {
+    setType("expense");
+    setAmount("");
+    setCategory(FALLBACK_CATEGORIES[0]);
+    setNote("");
+    setInterval("monthly");
+    setDayOfMonth(1);
+    setDayOfWeek(1);
+    setMonthOfYear(1);
+    setStartDate(new Date().toISOString().split("T")[0]);
+  }, []);
 
   if (!open) return null;
 
-  const handleSubmit = async () => {
-    const numAmount = parseFloat(amount);
-    if (!category || isNaN(numAmount) || numAmount <= 0) return;
+  const displayAmount = amount
+    ? Number.parseInt(amount, 10).toLocaleString("id-ID")
+    : "";
 
-    const payload: any = {
+  const handleSubmit = async () => {
+    const numAmount = Number.parseInt(amount, 10);
+    if (!category || Number.isNaN(numAmount) || numAmount <= 0) return;
+
+    const payload: {
+      reportId: string;
+      type: "income" | "expense";
+      amount: number;
+      category: string;
+      note?: string;
+      interval: "weekly" | "monthly" | "yearly";
+      startDate: string;
+      dayOfMonth?: number;
+      dayOfWeek?: number;
+      monthOfYear?: number;
+    } = {
       reportId,
       type,
       amount: numAmount,
@@ -193,37 +255,44 @@ export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps
     }
 
     try {
-      await createMutation.mutateAsync(payload);
+      if (editingTemplate) {
+        await updateMutation.mutateAsync({ id: editingTemplate.id, data: payload });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
       onOpenChange(false);
-      setAmount("");
-      setNote("");
+      resetForm();
     } catch {
       /* handled by react-query */
     }
   };
 
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white w-full rounded-t-xl p-4 max-h-[85vh] overflow-y-auto">
+      <div className="bg-(--card) w-full rounded-t-xl p-4 max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold">New Recurring Template</h3>
+          <h3 className="text-lg font-bold">
+            {editingTemplate ? "Edit Recurring Template" : "New Recurring Template"}
+          </h3>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-2 hover:bg-(--muted)rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="space-y-4">
-          <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
+          <div className="flex gap-2 bg-(--muted)rounded-lg p-1">
             {(["expense", "income"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setType(t)}
                 className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all ${
                   type === t
-                    ? "bg-white text-gray-900 shadow-sm"
+                    ? "bg-(--card) text-(--foreground) shadow-sm"
                     : "text-gray-500"
                 }`}
               >
@@ -234,20 +303,23 @@ export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Amount
+              Amount (Rp)
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                 Rp
               </span>
               <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                type="text"
+                inputMode="numeric"
+                value={displayAmount}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\D/g, "");
+                  setAmount(raw);
+                }}
+                className="w-full pl-10 pr-3 py-3 text-2xl font-semibold border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="0"
                 autoFocus
-                min="0"
               />
             </div>
           </div>
@@ -257,14 +329,14 @@ export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps
               Category
             </label>
             <div className="flex flex-wrap gap-1.5">
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setCategory(cat)}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                     category === cat
                       ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-black hover:bg-gray-200"
+                      : "bg-(--muted)text-(--foreground) hover:bg-gray-200"
                   }`}
                 >
                   {cat}
@@ -274,9 +346,9 @@ export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <div className="block text-sm font-medium text-gray-700 mb-1.5">
               Interval
-            </label>
+            </div>
             <div className="flex gap-2">
               {(["weekly", "monthly", "yearly"] as RecurrenceInterval[]).map(
                 (inv) => (
@@ -286,7 +358,7 @@ export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps
                     className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                       interval === inv
                         ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-black hover:bg-gray-200"
+                        : "bg-(--muted)text-(--foreground) hover:bg-gray-200"
                     }`}
                   >
                     {INTERVAL_LABELS[inv]}
@@ -298,13 +370,14 @@ export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps
 
           {interval === "weekly" && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="dayOfWeek" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Day of Week
               </label>
               <select
+                id="dayOfWeek"
                 value={dayOfWeek}
-                onChange={(e) => setDayOfWeek(parseInt(e.target.value))}
-                className="w-full py-2.5 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) => setDayOfWeek(Number.parseInt(e.target.value))}
+                className="w-full py-2.5 px-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 {[
                   "Sunday",
@@ -315,7 +388,7 @@ export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps
                   "Friday",
                   "Saturday",
                 ].map((day, idx) => (
-                  <option key={idx} value={idx}>
+                  <option key={day} value={idx}>
                     {day}
                   </option>
                 ))}
@@ -325,20 +398,21 @@ export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps
 
           {(interval === "monthly" || interval === "yearly") && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="dayOfMonth" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Day of Month
               </label>
               <input
+                id="dayOfMonth"
                 type="number"
                 value={dayOfMonth}
                 onChange={(e) =>
                   setDayOfMonth(
-                    Math.min(28, Math.max(1, parseInt(e.target.value) || 1))
+                    Math.min(28, Math.max(1, Number.parseInt(e.target.value) || 1))
                   )
                 }
                 min={1}
                 max={28}
-                className="w-full py-2.5 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full py-2.5 px-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <p className="text-xs text-gray-400 mt-1">
                 Capped at 28 to avoid February edge cases.
@@ -348,13 +422,14 @@ export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps
 
           {interval === "yearly" && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="monthOfYear" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Month
               </label>
               <select
+                id="monthOfYear"
                 value={monthOfYear}
-                onChange={(e) => setMonthOfYear(parseInt(e.target.value))}
-                className="w-full py-2.5 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) => setMonthOfYear(Number.parseInt(e.target.value))}
+                className="w-full py-2.5 px-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 {[
                   "January",
@@ -370,7 +445,7 @@ export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps
                   "November",
                   "December",
                 ].map((month, idx) => (
-                  <option key={idx} value={idx + 1}>
+                  <option key={month} value={idx + 1}>
                     {month}
                   </option>
                 ))}
@@ -386,7 +461,7 @@ export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full py-2.5 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full py-2.5 px-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
@@ -398,7 +473,7 @@ export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full py-2.5 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full py-2.5 px-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="e.g. Monthly electricity bill"
               maxLength={500}
             />
@@ -406,14 +481,11 @@ export function TemplateForm({ open, onOpenChange, reportId }: TemplateFormProps
 
           <button
             onClick={handleSubmit}
-            disabled={!amount || !category || createMutation.isPending}
+            disabled={!amount || !category || isPending}
             className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
           >
-            {createMutation.isPending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              "Create Template"
-            )}
+            {isPending && <Loader2 className="w-5 h-5 animate-spin" />}
+            {!isPending && (editingTemplate ? "Save Changes" : "Create Template")}
           </button>
         </div>
       </div>

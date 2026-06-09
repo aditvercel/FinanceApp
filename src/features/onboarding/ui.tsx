@@ -41,11 +41,11 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-(--card) flex flex-col">
       {step > 1 && step < 4 && (
         <button
           onClick={() => setStep(step - 1)}
-          className="flex items-center gap-1 p-4 text-black hover:text-gray-900"
+          className="flex items-center gap-1 p-4 text-(--foreground) hover:text-(--foreground)"
         >
           <ChevronLeft className="w-5 h-5" />
           Back
@@ -58,7 +58,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
             <span className="text-3xl">💰</span>
           </div>
           <h1 className="text-3xl font-bold mb-3">Welcome to Finance Tracker</h1>
-          <p className="text-black mb-8 max-w-sm">
+          <p className="text-(--foreground) mb-8 max-w-sm">
             Track your finances simply, together or on your own.
           </p>
           <button
@@ -103,14 +103,14 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
                 className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
                   setupType === option.type
                     ? "border-blue-600 bg-blue-50"
-                    : "border-gray-200 hover:border-gray-300"
+                    : "border-(--border) hover:border-(--border)"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{option.emoji}</span>
                   <div>
                     <div className="font-semibold">{option.title}</div>
-                    <div className="text-sm text-black">{option.desc}</div>
+                    <div className="text-sm text-(--foreground)">{option.desc}</div>
                   </div>
                 </div>
               </button>
@@ -122,7 +122,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
       {step === 3 && (
         <div className="flex-1 px-6 py-8">
           <h2 className="text-2xl font-bold mb-2">What do you usually spend on?</h2>
-          <p className="text-black mb-6">
+          <p className="text-(--foreground) mb-6">
             We&apos;ll set up budgets for these categories.
           </p>
 
@@ -135,7 +135,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
                     className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                       selectedCategories.includes(cat.key)
                         ? "border-blue-300 bg-blue-50"
-                        : "border-gray-200 hover:bg-gray-50"
+                        : "border-(--border) hover:bg-gray-50"
                     }`}
                   >
                     <input
@@ -169,7 +169,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
                 </button>
                 <button
                   onClick={() => setStep(4)}
-                  className="flex-1 border border-gray-300 py-3 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex-1 border border-(--border) py-3 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Skip for now
                 </button>
@@ -191,7 +191,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
                   <div className="space-y-6">
                     <div className="text-center py-6">
                       <p className="text-lg font-semibold mb-4">{cat}</p>
-                      <p className="text-sm text-black mb-2">
+                      <p className="text-sm text-(--foreground) mb-2">
                         Monthly budget
                       </p>
                       <div className="relative inline-block">
@@ -207,7 +207,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
                               [cat]: Number(e.target.value),
                             })
                           }
-                          className="text-center text-2xl font-bold w-48 pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                          className="text-center text-2xl font-bold w-48 pl-10 pr-4 py-3 border border-(--border) rounded-xl focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                     </div>
@@ -215,7 +215,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
                       {budgetStep > 0 && (
                         <button
                           onClick={() => setBudgetStep(budgetStep - 1)}
-                          className="flex-1 border border-gray-300 py-3 rounded-xl font-medium hover:bg-gray-50"
+                          className="flex-1 border border-(--border) py-3 rounded-xl font-medium hover:bg-gray-50"
                         >
                           Previous
                         </button>
@@ -249,7 +249,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
             <span className="text-3xl">🎉</span>
           </div>
           <h1 className="text-3xl font-bold mb-3">You&apos;re all set!</h1>
-          <p className="text-black mb-8 max-w-sm">
+          <p className="text-(--foreground) mb-8 max-w-sm">
             Add your first expense now — or scan a receipt to get started.
           </p>
           <div className="w-full max-w-xs space-y-3">
@@ -266,7 +266,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
               onClick={() => {
                 handleFinish();
               }}
-              className="w-full border border-gray-300 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+              className="w-full border border-(--border) py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
             >
               <Upload className="w-5 h-5" />
               Add Manually

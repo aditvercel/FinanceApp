@@ -46,9 +46,9 @@ export default function JoinReportPage() {
       <header className="flex items-center gap-3 mb-6">
         <button
           onClick={() => router.back()}
-          className="p-1 -ml-1 hover:bg-gray-100 rounded-lg"
+          className="p-1 -ml-1 hover:bg-(--muted)rounded-lg"
         >
-          <ArrowLeft className="w-5 h-5 text-black" />
+          <ArrowLeft className="w-5 h-5 text-(--foreground)" />
         </button>
         <h1 className="text-2xl font-bold">Join a Report</h1>
       </header>
@@ -63,7 +63,7 @@ export default function JoinReportPage() {
               type="text"
               value={formattedValue}
               onChange={(e) => setReportId(e.target.value)}
-              className="w-full px-3 py-3 text-lg tracking-widest border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+              className="w-full px-3 py-3 text-lg tracking-widest border border-(--border) rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
               placeholder="RPT_XK9MP2"
               maxLength={20}
               autoFocus
@@ -89,7 +89,7 @@ export default function JoinReportPage() {
 
       {step === "confirm" && preview && (
         <div className="space-y-4 animate-fade-in">
-          <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <div className="bg-(--card) border border-(--border) rounded-xl p-5">
             <div className="flex items-center gap-3 mb-4">
               <CheckCircle2 className="w-6 h-6 text-emerald-500" />
               <div>
@@ -99,7 +99,7 @@ export default function JoinReportPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-black mb-4">
+            <div className="flex items-center gap-2 text-sm text-(--foreground) mb-4">
               <Users className="w-4 h-4" />
               <span>{preview.memberCount} members</span>
             </div>
@@ -113,7 +113,7 @@ export default function JoinReportPage() {
                   setPreview(null);
                   setError("");
                 }}
-                className="flex-1 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex-1 py-2.5 border border-(--border) rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>

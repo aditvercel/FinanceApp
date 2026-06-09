@@ -120,9 +120,9 @@ export default function SearchPage() {
       <header className="flex items-center gap-3 mb-4">
         <button
           onClick={() => router.back()}
-          className="p-1 -ml-1 hover:bg-gray-100 rounded-lg"
+          className="p-1 -ml-1 hover:bg-(--muted)rounded-lg"
         >
-          <ArrowLeft className="w-5 h-5 text-black" />
+          <ArrowLeft className="w-5 h-5 text-(--foreground)" />
         </button>
         <h1 className="text-2xl font-bold">Search</h1>
       </header>
@@ -134,7 +134,7 @@ export default function SearchPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search entries, notes, merchants... (e.g. >50000)"
-          className="w-full pl-10 pr-9 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full pl-10 pr-9 py-2.5 border border-(--border) rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           autoFocus
         />
         {query && (
@@ -142,7 +142,7 @@ export default function SearchPage() {
             onClick={() => setQuery("")}
             className="absolute right-3 top-1/2 -translate-y-1/2"
           >
-            <X className="w-4 h-4 text-gray-400 hover:text-black" />
+            <X className="w-4 h-4 text-gray-400 hover:text-(--foreground)" />
           </button>
         )}
       </div>
@@ -151,7 +151,7 @@ export default function SearchPage() {
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white"
+          className="text-xs border border-(--border) rounded-lg px-2.5 py-1.5 bg-(--card)"
         >
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -163,7 +163,7 @@ export default function SearchPage() {
         <select
           value={type}
           onChange={(e) => setType(e.target.value)}
-          className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white"
+          className="text-xs border border-(--border) rounded-lg px-2.5 py-1.5 bg-(--card)"
         >
           <option value="All">All Types</option>
           <option value="income">Income</option>
@@ -176,7 +176,7 @@ export default function SearchPage() {
             className={`text-xs border rounded-lg px-2.5 py-1.5 ${
               amountFilter !== "any"
                 ? "bg-blue-50 border-blue-300 text-blue-700"
-                : "border-gray-200 bg-white text-gray-700"
+                : "border-(--border) bg-(--card) text-gray-700"
             }`}
           >
             {amountFilter === "any"
@@ -188,12 +188,12 @@ export default function SearchPage() {
               : `Rp ${amountMinInput || "..."} - Rp ${amountMaxInput || "..."}`}
           </button>
           {showAmountInput && (
-            <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 p-3 w-64">
+            <div className="absolute left-0 top-full mt-1 bg-(--card) border border-(--border) rounded-lg shadow-lg z-10 p-3 w-64">
               <div className="space-y-2">
                 <select
                   value={amountFilter}
                   onChange={(e) => setAmountFilter(e.target.value)}
-                  className="w-full text-sm border border-gray-200 rounded px-2 py-1"
+                  className="w-full text-sm border border-(--border) rounded px-2 py-1"
                 >
                   <option value="any">Any</option>
                   <option value="less">Less than...</option>
@@ -207,7 +207,7 @@ export default function SearchPage() {
                       placeholder="Rp"
                       value={amountMinInput}
                       onChange={(e) => setAmountMinInput(e.target.value)}
-                      className="w-full text-sm border border-gray-200 rounded px-2 py-1"
+                      className="w-full text-sm border border-(--border) rounded px-2 py-1"
                     />
                     {amountFilter === "between" && (
                       <input
@@ -215,7 +215,7 @@ export default function SearchPage() {
                         placeholder="and Rp"
                         value={amountMaxInput}
                         onChange={(e) => setAmountMaxInput(e.target.value)}
-                        className="w-full text-sm border border-gray-200 rounded px-2 py-1"
+                        className="w-full text-sm border border-(--border) rounded px-2 py-1"
                       />
                     )}
                   </div>
@@ -229,14 +229,14 @@ export default function SearchPage() {
           type="date"
           value={dateStart}
           onChange={(e) => setDateStart(e.target.value)}
-          className="text-xs border border-gray-200 rounded-lg px-2 py-1.5"
+          className="text-xs border border-(--border) rounded-lg px-2 py-1.5"
           placeholder="Start date"
         />
         <input
           type="date"
           value={dateEnd}
           onChange={(e) => setDateEnd(e.target.value)}
-          className="text-xs border border-gray-200 rounded-lg px-2 py-1.5"
+          className="text-xs border border-(--border) rounded-lg px-2 py-1.5"
           placeholder="End date"
         />
       </div>
@@ -250,7 +250,7 @@ export default function SearchPage() {
           results.map((result: any, i: number) => (
             <div
               key={result.entryId || i}
-              className="flex items-start gap-3 p-3 bg-white border border-gray-100 rounded-lg"
+              className="flex items-start gap-3 p-3 bg-(--card) border border-gray-100 rounded-lg"
             >
               <span
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
@@ -278,7 +278,7 @@ export default function SearchPage() {
                     {result.lineItems.map((li: any, j: number) => (
                       <span
                         key={j}
-                        className="text-xs bg-gray-100 px-1.5 py-0.5 rounded"
+                        className="text-xs bg-(--muted)px-1.5 py-0.5 rounded"
                       >
                         {li.name}
                       </span>
@@ -301,7 +301,7 @@ export default function SearchPage() {
         ) : hasFilters || query ? (
           <div className="text-center py-12">
             <SearchIcon className="w-10 h-10 mx-auto text-gray-300 mb-3" />
-            <p className="text-black font-medium">
+            <p className="text-(--foreground) font-medium">
               No results for {query ? `"${query}"` : "your filters"}
             </p>
             <div className="text-sm text-gray-500 mt-2 space-y-1">
@@ -314,7 +314,7 @@ export default function SearchPage() {
         ) : (
           <div className="text-center py-12">
             <SearchIcon className="w-10 h-10 mx-auto text-gray-300 mb-3" />
-            <p className="text-black">Start typing to search</p>
+            <p className="text-(--foreground)">Start typing to search</p>
             <p className="text-sm text-gray-500 mt-1">
               Try &quot;indomie&quot; or &quot;groceries&quot;
             </p>

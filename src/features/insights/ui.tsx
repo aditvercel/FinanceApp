@@ -35,7 +35,7 @@ interface InsightCardProps {
   };
 }
 
-function InsightCard({ insight }: InsightCardProps) {
+function InsightCard({ insight }: Readonly<InsightCardProps>) {
   const { icon: Icon, color } = INSIGHT_ICONS[insight.type] || {
     icon: Sparkles,
     color: "text-gray-500",
@@ -52,7 +52,7 @@ function InsightCard({ insight }: InsightCardProps) {
           <p className="text-sm font-semibold">{insight.title}</p>
           <p className="text-sm text-gray-700 mt-0.5">{insight.body}</p>
           {insight.basis && (
-            <p className="text-xs text-gray-500 mt-1.5 border-t border-gray-200 pt-1">
+            <p className="text-xs text-gray-500 mt-1.5 border-t border-(--border) pt-1">
               {insight.basis}
             </p>
           )}
@@ -67,24 +67,32 @@ interface InsightsPanelProps {
   reportName?: string;
 }
 
-export function InsightsPanel({ reportId, reportName }: InsightsPanelProps) {
+export function InsightsPanel({ reportId, reportName }: Readonly<InsightsPanelProps>) {
   const { data, isLoading, dataUpdatedAt } = useInsights(reportId);
   const refresh = useRefreshInsights();
   const [collapsed, setCollapsed] = useState(true);
   const [countdown, setCountdown] = useState(0);
   const [rateLimitedUntil, setRateLimitedUntil] = useState(0);
+  const [isRateLimited, setIsRateLimited] = useState(false);
 
   useEffect(() => {
     if (!dataUpdatedAt) return;
-    const elapsed = Date.now() - dataUpdatedAt;
-    const remaining = Math.max(0, 30 * 60 * 1000 - elapsed);
-    setCountdown(Math.ceil(remaining / 1000));
 
-    const interval = setInterval(() => {
-      setCountdown((prev) => Math.max(0, prev - 1));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [dataUpdatedAt]);
+    const update = () => {
+      const now = Date.now();
+      const elapsed = now - dataUpdatedAt;
+      const remaining = Math.max(0, 30 * 60 * 1000 - elapsed);
+      setCountdown(Math.ceil(remaining / 1000));
+      setIsRateLimited(rateLimitedUntil > 0 && now < rateLimitedUntil);
+    };
+
+    const timeout = setTimeout(update, 0);
+    const interval = setInterval(update, 1000);
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
+  }, [dataUpdatedAt, rateLimitedUntil]);
 
   const formatCountdown = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -98,14 +106,14 @@ export function InsightsPanel({ reportId, reportName }: InsightsPanelProps) {
     const perHour = 60 * 60 * 1000;
     const now = Date.now();
 
-    if (now < rateLimitedUntil) {
+    if (isRateLimited) {
       return;
     }
 
     refresh.mutate(reportId, {
       onSuccess: () => {
         const key = `insight_refresh_count_${reportId}`;
-        const count = parseInt(localStorage.getItem(key) || "0", 10) + 1;
+        const count = Number.parseInt(localStorage.getItem(key) || "0", 10) + 1;
         localStorage.setItem(key, String(count));
 
         if (count >= refreshLimit) {
@@ -119,17 +127,31 @@ export function InsightsPanel({ reportId, reportName }: InsightsPanelProps) {
     });
   };
 
-  const isRateLimited = Date.now() < rateLimitedUntil;
-
   if (isLoading) {
     return (
-      <div className="rounded-lg border p-4 space-y-3">
-        {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="animate-pulse space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-1/3" />
-            <div className="h-3 bg-gray-200 rounded w-2/3" />
+      <div className="rounded-lg border overflow-hidden animate-pulse">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 bg-gray-200 rounded" />
+            <div className="h-5 w-24 bg-gray-200 rounded" />
           </div>
-        ))}
+          <div className="h-4 w-10 bg-gray-200 rounded" />
+        </div>
+        <div className="px-4 pb-4 space-y-3">
+          <div className="h-3 w-64 bg-gray-200 rounded" />
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-lg border p-3 space-y-2">
+              <div className="flex items-start gap-2">
+                <div className="w-4 h-4 bg-gray-200 rounded mt-0.5" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-4 w-44 bg-gray-200 rounded" />
+                  <div className="h-3 w-64 bg-gray-200 rounded" />
+                  <div className="h-3 w-48 bg-gray-200 rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -143,13 +165,13 @@ export function InsightsPanel({ reportId, reportName }: InsightsPanelProps) {
           <Sparkles className="w-5 h-5 text-purple-500" />
           <h3 className="font-semibold">AI Insights</h3>
         </div>
-        <p className="text-sm text-black">
+        <p className="text-sm text-(--foreground)">
           Not enough data yet. Add at least 2 weeks of expenses to get personalised insights.
         </p>
         {reportName && (
           <p className="text-xs text-gray-400 mt-2">
             Based on {reportName} · Last 90 days
-            {dataUpdatedAt && (
+            {dataUpdatedAt ?? (
               <> · Generated {new Date(dataUpdatedAt).toLocaleTimeString()}</>
             )}
           </p>
@@ -186,7 +208,7 @@ export function InsightsPanel({ reportId, reportName }: InsightsPanelProps) {
           )}
 
           <div className="space-y-2">
-            {insights.slice(0, 4).map((insight: any, idx: number) => (
+            {insights.slice(0, 4).map((insight: { type: string; title: string; body: string; basis?: string; severity: string }, idx: number) => (
               <InsightCard key={idx} insight={insight} />
             ))}
             {insights.length > 4 && (

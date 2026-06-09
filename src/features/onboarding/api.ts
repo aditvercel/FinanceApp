@@ -3,7 +3,7 @@ export function completeOnboarding() {
 }
 
 export function isOnboardingCompleted(): boolean {
-  if (typeof window === "undefined") return false;
+  if (globalThis.window === undefined) return false;
   return localStorage.getItem("onboarding_completed") === "true";
 }
 

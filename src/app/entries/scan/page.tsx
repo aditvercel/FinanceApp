@@ -10,13 +10,13 @@ export default function ScanPage() {
   const [open, setOpen] = useState(true);
 
   return (
-    <div className="h-screen bg-white">
-      <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+    <div className="h-screen bg-(--card)">
+      <div className="flex items-center gap-3 p-4 border-b border-(--border)">
         <button
           onClick={() => router.back()}
-          className="p-1 -ml-1 hover:bg-gray-100 rounded-lg"
+          className="p-1 -ml-1 hover:bg-(--muted)rounded-lg"
         >
-          <ArrowLeft className="w-5 h-5 text-black" />
+          <ArrowLeft className="w-5 h-5 text-(--foreground)" />
         </button>
         <h1 className="text-lg font-semibold">Scan Receipt</h1>
       </div>
