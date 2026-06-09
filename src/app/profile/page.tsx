@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -9,6 +10,7 @@ import {
   ChevronRight,
   Shield,
   HelpCircle,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-provider";
 
@@ -47,9 +49,10 @@ function ProfileRow({ icon, label, onClick, danger }: ProfileRowProps) {
 export default function ProfilePage() {
   const router = useRouter();
   const { user: authUser, logout } = useAuth();
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   const { data: user, isLoading } = useQuery({
-    queryKey: ["profile"],
+    queryKey: ["profile", authUser?.id],
     queryFn: async () => {
       const res = await fetch("/api/auth/profile");
       const json = await res.json();
@@ -147,14 +150,46 @@ export default function ProfilePage() {
             icon={<LogOut className="w-5 h-5" />}
             label="Sign Out"
             danger
-            onClick={() => {
-              if (confirm("Are you sure you want to sign out?")) {
-                logout();
-              }
-            }}
+            onClick={() => setShowSignOutConfirm(true)}
           />
         </div>
       </div>
+
+      {showSignOutConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-(--card) rounded-xl w-full max-w-sm p-5 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold">Sign Out</h3>
+              <button
+                onClick={() => setShowSignOutConfirm(false)}
+                className="p-1 hover:bg-(--muted)rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-(--foreground)">
+              Are you sure you want to sign out?
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setShowSignOutConfirm(false)}
+                className="px-4 py-2 border border-(--border) rounded-lg text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowSignOutConfirm(false);
+                  logout();
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm"
+              >
+                Yes, Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mt-8 text-center">
         <p className="text-xs text-gray-400">Finance Tracker</p>

@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-provider";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
+import { TabBar } from "./tab-bar";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/onboarding"];
 
@@ -62,5 +63,12 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <main className={`flex-1 flex flex-col ${isPublic ? "" : "pb-16"}`}>
+        {children}
+      </main>
+      {!isPublic && <TabBar />}
+    </>
+  );
 }

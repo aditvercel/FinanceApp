@@ -4,7 +4,6 @@ import "./globals.css";
 import { QueryProvider } from "@/lib/query-provider";
 import { AuthProvider } from "@/lib/auth-provider";
 import { AuthGuard } from "@/components/auth-guard";
-import { TabBar } from "@/components/tab-bar";
 import { ToastProvider } from "@/lib/toat";
 import { ThemeProvider } from "@/lib/theme-provider";
 
@@ -38,8 +37,7 @@ export default function RootLayout({
           <ThemeProvider>
             <AuthProvider>
               <AuthGuard>
-                <main className="flex-1 pb-16">{children}</main>
-                <TabBar />
+                {children}
               </AuthGuard>
             </AuthProvider>
           </ThemeProvider>

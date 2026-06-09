@@ -107,7 +107,7 @@ export function TemplateList({
                   </p>
                 )}
                 <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
-                  <span className="font-medium text-gray-700">
+                  <span className="font-medium text-(--foreground)">
                     {formatCurrency(template.amount)}
                   </span>
                   <span className="flex items-center gap-1">
@@ -302,7 +302,7 @@ export function TemplateForm({ open, onOpenChange, reportId, editingTemplate }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-(--foreground) mb-1.5">
               Amount (Rp)
             </label>
             <div className="relative">
@@ -325,7 +325,7 @@ export function TemplateForm({ open, onOpenChange, reportId, editingTemplate }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-(--foreground) mb-1.5">
               Category
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -336,7 +336,7 @@ export function TemplateForm({ open, onOpenChange, reportId, editingTemplate }: 
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                     category === cat
                       ? "bg-blue-600 text-white"
-                      : "bg-(--muted)text-(--foreground) hover:bg-gray-200"
+                      : "bg-(--card) text-(--muted-foreground) hover:bg-gray-200"
                   }`}
                 >
                   {cat}
@@ -346,7 +346,7 @@ export function TemplateForm({ open, onOpenChange, reportId, editingTemplate }: 
           </div>
 
           <div>
-            <div className="block text-sm font-medium text-gray-700 mb-1.5">
+            <div className="block text-sm font-medium text-(--foreground) mb-1.5">
               Interval
             </div>
             <div className="flex gap-2">
@@ -370,7 +370,7 @@ export function TemplateForm({ open, onOpenChange, reportId, editingTemplate }: 
 
           {interval === "weekly" && (
             <div>
-              <label htmlFor="dayOfWeek" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="dayOfWeek" className="block text-sm font-medium text-(--foreground) mb-1.5">
                 Day of Week
               </label>
               <select
@@ -398,7 +398,7 @@ export function TemplateForm({ open, onOpenChange, reportId, editingTemplate }: 
 
           {(interval === "monthly" || interval === "yearly") && (
             <div>
-              <label htmlFor="dayOfMonth" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="dayOfMonth" className="block text-sm font-medium text-(--foreground) mb-1.5">
                 Day of Month
               </label>
               <input
@@ -422,7 +422,7 @@ export function TemplateForm({ open, onOpenChange, reportId, editingTemplate }: 
 
           {interval === "yearly" && (
             <div>
-              <label htmlFor="monthOfYear" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="monthOfYear" className="block text-sm font-medium text-(--foreground) mb-1.5">
                 Month
               </label>
               <select
@@ -454,7 +454,7 @@ export function TemplateForm({ open, onOpenChange, reportId, editingTemplate }: 
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-(--foreground) mb-1.5">
               Start Date
             </label>
             <input
@@ -466,7 +466,7 @@ export function TemplateForm({ open, onOpenChange, reportId, editingTemplate }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-(--foreground) mb-1.5">
               Note (optional)
             </label>
             <input

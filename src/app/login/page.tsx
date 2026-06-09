@@ -72,16 +72,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-(--card) flex flex-col">
+    <div className="h-screen flex items-center justify-center pb-0!">
       {/* Header */}
-      <div className="p-4">
+      {/* <div className="p-4">
         <button
           onClick={() => router.back()}
           className="p-1 -ml-1 hover:bg-(--muted)rounded-lg"
         >
           <ArrowLeft className="w-5 h-5 text-(--foreground)" />
         </button>
-      </div>
+      </div> */}
 
       <div className="flex-1 flex flex-col px-6 pb-8">
         {/* Branding */}
@@ -115,7 +115,7 @@ export default function LoginPage() {
                 placeholder="you@example.com"
                 autoCapitalize="off"
                 autoComplete="email"
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-(--border) rounded-xl text-(--foreground) placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-(--border) rounded-xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
           </div>

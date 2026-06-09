@@ -84,7 +84,7 @@ export function CategoryManager({ reportId }: CategoryManagerProps) {
             {defaultCats.map((cat) => (
               <div
                 key={cat.id}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-gray-50"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-(--card)"
               >
                 <span className="text-lg">{cat.emoji}</span>
                 <span className="font-medium text-sm">{cat.name}</span>

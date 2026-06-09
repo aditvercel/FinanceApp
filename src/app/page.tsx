@@ -37,8 +37,10 @@ function getActivityIcon(eventType: string): string {
   if (eventType.startsWith("member.")) return "📢";
   if (eventType.startsWith("budget.")) return "⚠️";
   if (eventType.startsWith("recurring.")) return "🔄";
-  if (eventType.startsWith("report.") && eventType.endsWith(".deleted")) return "🗑️";
-  if (eventType.startsWith("report.") && eventType.endsWith(".updated")) return "✏️";
+  if (eventType.startsWith("report.") && eventType.endsWith(".deleted"))
+    return "🗑️";
+  if (eventType.startsWith("report.") && eventType.endsWith(".updated"))
+    return "✏️";
   if (eventType.startsWith("report.")) return "📄";
   return "📌";
 }
@@ -58,7 +60,10 @@ export default function HomePage() {
   const { user } = useAuth();
   const { theme, toggle: toggleTheme } = useTheme();
   const qc = useQueryClient();
-  const [confirming, setConfirming] = useState<{ action: "edit" | "delete"; report: any } | null>(null);
+  const [confirming, setConfirming] = useState<{
+    action: "edit" | "delete";
+    report: any;
+  } | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
   const deleteReport = useMutation({
@@ -71,7 +76,13 @@ export default function HomePage() {
   });
 
   const editReport = useMutation({
-    mutationFn: async ({ reportId, name }: { reportId: string; name: string }) => {
+    mutationFn: async ({
+      reportId,
+      name,
+    }: {
+      reportId: string;
+      name: string;
+    }) => {
       const res = await fetch(`/api/reports/${reportId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -83,7 +94,11 @@ export default function HomePage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["reports"] }),
   });
 
-  const { data: reports, isLoading, error } = useQuery({
+  const {
+    data: reports,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["reports"],
     queryFn: getReports,
   });
@@ -97,13 +112,18 @@ export default function HomePage() {
       const res = await fetch("/api/reports/dashboard?period=monthly");
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Failed");
-      return json.data as { totalIncome: number; totalExpense: number; netBalance: number };
+      return json.data as {
+        totalIncome: number;
+        totalExpense: number;
+        netBalance: number;
+      };
     },
   });
 
   const totalIncome = dashboardQuery.data?.totalIncome ?? 0;
   const totalExpense = dashboardQuery.data?.totalExpense ?? 0;
-  const netBalance = dashboardQuery.data?.netBalance ?? (totalIncome - totalExpense);
+  const netBalance =
+    dashboardQuery.data?.netBalance ?? totalIncome - totalExpense;
 
   if (isLoading) {
     return (
@@ -129,29 +149,58 @@ export default function HomePage() {
       <header className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Finance Tracker</h1>
         <div className="flex items-center gap-2">
-          <button onClick={toggleTheme} className="p-2 hover:bg-(--muted) rounded-lg" aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}>
-            {theme === "light" ? <Moon className="w-5 h-5" style={{color: "var(--muted-foreground)"}} /> : <Sun className="w-5 h-5" style={{color: "var(--muted-foreground)"}} />}
+          <button
+            onClick={toggleTheme}
+            className="p-2 hover:bg-(--muted) rounded-lg"
+            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+          >
+            {theme === "light" ? (
+              <Moon
+                className="w-5 h-5"
+                style={{ color: "var(--muted-foreground)" }}
+              />
+            ) : (
+              <Sun
+                className="w-5 h-5"
+                style={{ color: "var(--muted-foreground)" }}
+              />
+            )}
           </button>
           <Link
             href="/notifications"
             className="p-2 hover:bg-(--muted) rounded-lg relative"
             aria-label="Notifications"
           >
-            <Bell className="w-5 h-5" style={{color: "var(--muted-foreground)"}} />
+            <Bell
+              className="w-5 h-5"
+              style={{ color: "var(--muted-foreground)" }}
+            />
           </Link>
           <Link
             href="/settings"
             className="p-2 hover:bg-(--muted) rounded-lg"
             aria-label="Settings"
           >
-            <Settings className="w-5 h-5" style={{color: "var(--muted-foreground)"}} />
+            <Settings
+              className="w-5 h-5"
+              style={{ color: "var(--muted-foreground)" }}
+            />
           </Link>
         </div>
       </header>
 
       <section className="mb-6">
-        <div className="rounded-xl p-5 border" style={{background: "linear-gradient(135deg, rgba(13,115,119,0.08), rgba(201,123,58,0.06))", borderColor: "var(--border)"}}>
-          <p className="text-sm text-(--foreground) font-medium mb-1">This Month</p>
+        <div
+          className="rounded-xl p-5 border"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(13,115,119,0.08), rgba(201,123,58,0.06))",
+            borderColor: "var(--border)",
+          }}
+        >
+          <p className="text-sm text-(--foreground) font-medium mb-1">
+            This Month
+          </p>
           <div className="text-3xl font-bold mb-3 currency">
             {formatCurrency(netBalance)}
           </div>
@@ -198,10 +247,7 @@ export default function HomePage() {
                   key={report.id}
                   className="relative group bg-(--card) border border-(--border) rounded-xl hover:border-blue-300 hover:shadow-sm transition-all"
                 >
-                  <Link
-                    href={`/reports/${report.id}`}
-                    className="block p-4"
-                  >
+                  <Link href={`/reports/${report.id}`} className="block p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">
@@ -225,7 +271,10 @@ export default function HomePage() {
                       (report as any).budgetWarnings.length > 0 && (
                         <div className="mt-2 flex gap-1.5">
                           {(report as any).budgetWarnings.map(
-                            (w: { category: string; status: string }, i: number) => (
+                            (
+                              w: { category: string; status: string },
+                              i: number,
+                            ) => (
                               <span
                                 key={i}
                                 className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
@@ -237,12 +286,12 @@ export default function HomePage() {
                                 {w.status === "exceeded" ? "🔴" : "⚠️"}{" "}
                                 {w.category} over budget
                               </span>
-                            )
+                            ),
                           )}
                         </div>
                       )}
                   </Link>
-                  <div className="absolute top-6 right-10 flex gap-3 ">
+                  <div className="absolute top-6 right-10 flex gap-3">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -255,17 +304,19 @@ export default function HomePage() {
                     >
                       <Pencil className="w-3.5 h-3.5 text-(--muted-foreground)" />
                     </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        setConfirming({ action: "delete", report });
-                      }}
-                      className="p-1.5 bg-(--card) border border-(--destructive)/30 rounded-lg hover:bg-(--destructive)/10 shadow-sm"
-                      title="Delete report"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                    </button>
+                    {isOwner && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setConfirming({ action: "delete", report });
+                        }}
+                        className="p-1.5 bg-(--card) border border-(--destructive)/30 rounded-lg hover:bg-(--destructive)/10 shadow-sm"
+                        title="Delete report"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -274,9 +325,7 @@ export default function HomePage() {
         ) : (
           <div className="bg-gray-50 rounded-xl p-8 text-center border border-dashed border-(--border)">
             <div className="text-4xl mb-3">📊</div>
-            <p className="text-gray-700 font-medium mb-1">
-              No reports yet
-            </p>
+            <p className="text-gray-700 font-medium mb-1">No reports yet</p>
             <p className="text-sm text-(--muted-foreground) mb-4">
               Create a report to start tracking your finances.
             </p>
@@ -304,7 +353,8 @@ export default function HomePage() {
           <h2 className="text-lg font-semibold">Recent Activity</h2>
           <Link
             href="/activity"
-            className="text-sm" style={{color: "var(--primary)"}}
+            className="text-sm"
+            style={{ color: "var(--primary)" }}
           >
             View all
           </Link>
@@ -325,12 +375,11 @@ export default function HomePage() {
                     {event.eventType === "entry.created"
                       ? "added"
                       : event.eventType === "entry.edited"
-                      ? "edited"
-                      : event.eventType === "entry.reverted"
-                      ? "reverted"
-                      : event.eventType.replace(/\./g, " ")}
-                    {event.metadata?.category &&
-                      ` ${event.metadata.category}`}
+                        ? "edited"
+                        : event.eventType === "entry.reverted"
+                          ? "reverted"
+                          : event.eventType.replace(/\./g, " ")}
+                    {event.metadata?.category && ` ${event.metadata.category}`}
                   </p>
                   <p className="text-xs text-(--muted-foreground) mt-0.5">
                     {event.metadata?.amount &&
@@ -341,7 +390,10 @@ export default function HomePage() {
               </div>
             ))
           ) : (
-            <p className="text-sm text-center py-4" style={{color: "var(--muted-foreground)"}}>
+            <p
+              className="text-sm text-center py-4"
+              style={{ color: "var(--muted-foreground)" }}
+            >
               No recent activity.
             </p>
           )}
@@ -355,15 +407,19 @@ export default function HomePage() {
               <>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold">Delete Report</h3>
-                  <button onClick={() => setConfirming(null)} className="p-1 hover:bg-(--muted) rounded">
+                  <button
+                    onClick={() => setConfirming(null)}
+                    className="p-1 hover:bg-(--muted) rounded"
+                  >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
                 {user?.id === confirming.report.ownerId ? (
                   <>
                     <p className="text-sm text-(--foreground)">
-                      Are you sure you want to delete <strong>{confirming.report.name}</strong>?
-                      This will hide it from all members. It can be recovered within 30 days.
+                      Are you sure you want to delete{" "}
+                      <strong>{confirming.report.name}</strong>? This will hide
+                      it from all members. It can be recovered within 30 days.
                     </p>
                     <div className="flex gap-2 justify-end">
                       <button
@@ -387,8 +443,9 @@ export default function HomePage() {
                 ) : (
                   <>
                     <p className="text-sm text-(--foreground)">
-                      You need permission from the owner to delete <strong>{confirming.report.name}</strong>.
-                      Contact the report owner to request deletion.
+                      You need permission from the owner to delete{" "}
+                      <strong>{confirming.report.name}</strong>. Contact the
+                      report owner to request deletion.
                     </p>
                     <div className="flex gap-2 justify-end">
                       <button
@@ -411,7 +468,10 @@ export default function HomePage() {
               <>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold">Rename Report</h3>
-                  <button onClick={() => setConfirming(null)} className="p-1 hover:bg-(--muted)rounded">
+                  <button
+                    onClick={() => setConfirming(null)}
+                    className="p-1 hover:bg-(--muted)rounded"
+                  >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
@@ -435,7 +495,10 @@ export default function HomePage() {
                       <button
                         onClick={() => {
                           if (renameValue.trim()) {
-                            editReport.mutate({ reportId: confirming.report.id, name: renameValue.trim() });
+                            editReport.mutate({
+                              reportId: confirming.report.id,
+                              name: renameValue.trim(),
+                            });
                             setConfirming(null);
                           }
                         }}
@@ -449,8 +512,9 @@ export default function HomePage() {
                 ) : (
                   <>
                     <p className="text-sm text-(--foreground)">
-                      You need permission from the owner to rename <strong>{confirming.report.name}</strong>.
-                      Contact the report owner to request a name change.
+                      You need permission from the owner to rename{" "}
+                      <strong>{confirming.report.name}</strong>. Contact the
+                      report owner to request a name change.
                     </p>
                     <div className="flex gap-2 justify-end">
                       <button
