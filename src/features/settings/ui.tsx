@@ -80,7 +80,7 @@ export function SettingsList({ onNavigate }: SettingsListProps) {
                 <item.icon className="w-5 h-5 text-gray-400" />
               <div className="flex-1 text-left">
                 <span className="text-sm font-medium">{item.label}</span>
-                {"subtitle" in item && item.subtitle && (
+                {"subtitle" in item && (item as any).subtitle && (
                   <p className="text-xs text-gray-500">{(item as any).subtitle}</p>
                 )}
               </div>
