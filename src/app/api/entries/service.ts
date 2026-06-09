@@ -21,11 +21,15 @@ export class PermissionError extends Error {
 export class EntryService {
   constructor(private repo: EntryRepository) {}
 
-  async list(reportId: string, userId: string): Promise<EntryWithSnapshot[]> {
+  async list(
+    reportId: string,
+    userId: string,
+    opts?: { cursor?: string; limit?: number }
+  ): Promise<{ entries: EntryWithSnapshot[]; nextCursor: string | null }> {
     const role = await this.repo.checkMemberRole(reportId, userId);
     if (!role) throw new PermissionError("Access denied to this report");
 
-    return this.repo.getEntries(reportId, userId);
+    return this.repo.getEntries(reportId, userId, opts);
   }
 
   async get(entryId: string, userId: string): Promise<EntryWithSnapshot | null> {

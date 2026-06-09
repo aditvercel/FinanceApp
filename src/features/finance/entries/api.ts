@@ -5,6 +5,19 @@ export async function getEntries(reportId: string) {
   return json.data;
 }
 
+export async function getEntriesPaginated(
+  reportId: string,
+  opts?: { cursor?: string; limit?: number }
+) {
+  const p = new URLSearchParams({ reportId });
+  if (opts?.cursor) p.set("cursor", opts.cursor);
+  if (opts?.limit) p.set("limit", String(opts.limit));
+  const res = await fetch(`/api/entries?${p}`);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Failed to get entries");
+  return json.data as { entries: any[]; nextCursor: string | null };
+}
+
 export async function createEntry(data: any) {
   const res = await fetch("/api/entries", {
     method: "POST",

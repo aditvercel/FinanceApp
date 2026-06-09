@@ -95,7 +95,7 @@ export default function ActivityPage() {
   const [showFilter, setShowFilter] = useState(false);
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useActivity({ limit: 20 });
+    useActivity({ limit: 10 });
 
   const allEvents = data?.pages?.flat() ?? [];
   const filteredEvents =

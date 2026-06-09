@@ -1,13 +1,16 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
-import { useState } from "react";
+import { useAuth } from "@/lib/auth-provider";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
 import { useReport, useRequestEditorAccess, useManageMember } from "@/features/finance/reports/hooks";
 import { useToast } from "@/lib/toat";
+import { useInView } from "@/lib/use-in-view";
 
 import { useActivity } from "@/features/activity/hooks";
+import { useInfiniteEntries } from "@/features/finance/entries/hooks";
 import {
   NetBalanceChart,
   IncomeExpenseBar,
@@ -81,6 +84,7 @@ export default function ReportDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const { user } = useAuth();
   const qc = useQueryClient();
   const [confirmingEntry, setConfirmingEntry] = useState<string | null>(null);
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
@@ -124,7 +128,7 @@ export default function ReportDetailPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Delete failed");
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["entries", id] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["entries", user?.id, id] }),
   });
 
   const editEntry = useMutation({
@@ -137,18 +141,23 @@ export default function ReportDetailPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Update failed");
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["entries", id] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["entries", user?.id, id] }),
   });
 
   const { data: report, isLoading: reportLoading } = useReport(id.toString());
 
-  const { data: activityPages } = useActivity({ reportId: id.toString(), limit: 20 });
+  const {
+    data: activityPages,
+    fetchNextPage: fetchNextActivity,
+    hasNextPage: hasNextActivity,
+    isFetchingNextPage: isFetchingNextActivity,
+  } = useActivity({ reportId: id.toString(), limit: 10 });
   const activities = activityPages?.pages?.flat() ?? [];
 
   const { data: insights } = useInsights(id.toString());
 
   const dashboardQuery = useQuery({
-    queryKey: ["report-dashboard", id],
+    queryKey: ["report-dashboard", user?.id, id],
     queryFn: async () => {
       const res = await fetch(`/api/reports/${id}/dashboard?period=monthly`);
       const json = await res.json();
@@ -162,24 +171,14 @@ export default function ReportDetailPage() {
     },
   });
 
-  const entriesQuery = useQuery({
-    queryKey: ["entries", id],
-    queryFn: async () => {
-      const res = await fetch(`/api/entries?reportId=${id}`);
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Failed");
-      return json.data as Array<{
-        id: string;
-        type: string;
-        amount: number;
-        category: string;
-        note?: string;
-        entryDate: string;
-        createdAt: string;
-        createdBy: { displayName: string };
-      }>;
-    },
-  });
+  const {
+    data: entriesPages,
+    fetchNextPage: fetchNextEntries,
+    hasNextPage: hasNextEntries,
+    isFetchingNextPage: isFetchingNextEntries,
+    isLoading: entriesLoading,
+  } = useInfiniteEntries(id.toString());
+  const allEntries = entriesPages?.pages?.flatMap(p => p.entries) ?? [];
 
   const tabs = ["Overview", "Entries", "Charts", "Activity"];
 
@@ -195,11 +194,11 @@ export default function ReportDetailPage() {
   const totalExpense = dashboardQuery.data?.totalExpense ?? 0;
   const netBalance = dashboardQuery.data?.netBalance ?? (totalIncome - totalExpense);
 
-  const allEntries = dashboardQuery.data?.entries ?? [];
+  const dashboardEntries = dashboardQuery.data?.entries ?? [];
   const dayMap = new Map<string, number>();
   const categoryMap = new Map<string, { total: number; count: number }>();
   let totalExpenseAmount = 0;
-  for (const e of allEntries) {
+  for (const e of dashboardEntries) {
     const amt = Number(e.amount);
     const day = e.entry_date?.slice(0, 10) ?? "unknown";
     const prev = dayMap.get(day) ?? 0;
@@ -225,10 +224,17 @@ export default function ReportDetailPage() {
 
   const weekMap = new Map<string, { income: number; expense: number }>();
   for (const e of allEntries) {
-    const dt = new Date(e.entry_date + "T00:00:00");
-    const weekStart = new Date(dt);
-    weekStart.setDate(dt.getDate() - dt.getDay());
-    const key = weekStart.toISOString().slice(0, 10);
+    const dateStr = e?.entryDate ?? e?.entry_date;
+    if (!dateStr || typeof dateStr !== "string") continue;
+    const parts = dateStr.slice(0, 10).split("-");
+    if (parts.length !== 3) continue;
+    const d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+    if (isNaN(d.getTime())) continue;
+    d.setDate(d.getDate() - d.getDay());
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const key = `${y}-${m}-${day}`;
     if (!weekMap.has(key)) weekMap.set(key, { income: 0, expense: 0 });
     const w = weekMap.get(key)!;
     const amt = Number(e.amount);
@@ -253,12 +259,10 @@ export default function ReportDetailPage() {
     .slice(0, 5);
 
   const entriesByDate: Record<string, Entry[]> = {};
-  if (entriesQuery.data) {
-    for (const entry of entriesQuery.data) {
-      const key = entry.entryDate;
-      if (!entriesByDate[key]) entriesByDate[key] = [];
-      entriesByDate[key].push(entry);
-    }
+  for (const entry of allEntries) {
+    const key = entry.entryDate;
+    if (!entriesByDate[key]) entriesByDate[key] = [];
+    entriesByDate[key].push(entry);
   }
 
   return (
@@ -490,7 +494,7 @@ export default function ReportDetailPage() {
                 className="w-full pl-10 pr-3 py-2 border border-(--border) rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            {entriesQuery.isLoading ? (
+            {entriesLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-(--muted-foreground)" />
               </div>
@@ -562,6 +566,11 @@ export default function ReportDetailPage() {
                     </div>
                   </div>
                 ))}
+                <InfiniteSentinel
+                  hasNext={hasNextEntries}
+                  isFetching={isFetchingNextEntries}
+                  onLoadMore={fetchNextEntries}
+                />
               </div>
             ) : (
               <div className="text-center py-12">
@@ -619,6 +628,11 @@ export default function ReportDetailPage() {
                     </div>
                   </div>
                 ))}
+                <InfiniteSentinel
+                  hasNext={hasNextActivity}
+                  isFetching={isFetchingNextActivity}
+                  onLoadMore={fetchNextActivity}
+                />
               </div>
             ) : (
               <div className="text-center py-12">
@@ -676,14 +690,14 @@ export default function ReportDetailPage() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-(--card) rounded-xl w-full max-w-md p-5 space-y-4 shadow-xl max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold">Members</h3>
+              <h3 className="text-lg font-bold">  </h3>
               <button onClick={() => setShowMembers(false)} className="p-1 hover:bg-(--muted)rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-3">
                {(report as unknown as { members?: Array<{ id: string; userId: string; role: string; displayName?: string }> }).members?.map((m) => (
-                <div key={m.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={m.id} className="flex items-center justify-between p-3 bg-(--card) rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                       m.role === "owner" ? "bg-(--accent)/15 text-(--accent)" :
@@ -985,4 +999,40 @@ function EditEntryModal({
       </div>
     </div>
   );
+}
+
+function InfiniteSentinel({
+  hasNext,
+  isFetching,
+  onLoadMore,
+}: {
+  hasNext: boolean;
+  isFetching: boolean;
+  onLoadMore: () => void;
+}) {
+  const { ref, inView } = useInView({ rootMargin: "300px" });
+
+  useEffect(() => {
+    if (inView && hasNext && !isFetching) {
+      onLoadMore();
+    }
+  }, [inView, hasNext, isFetching, onLoadMore]);
+
+  if (isFetching) {
+    return (
+      <div className="flex justify-center py-4">
+        <Loader2 className="w-5 h-5 animate-spin text-(--muted-foreground)" />
+      </div>
+    );
+  }
+
+  if (!hasNext) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-xs text-(--muted-foreground)">No more</p>
+      </div>
+    );
+  }
+
+  return <div ref={ref} className="h-4" />;
 }

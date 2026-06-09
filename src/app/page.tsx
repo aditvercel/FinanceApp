@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getReports } from "@/features/finance/reports/api";
+import { useReports } from "@/features/finance/reports/hooks";
+import Loading from "./loading";
 import { useActivity } from "@/features/activity/hooks";
 import { useAuth } from "@/lib/auth-provider";
 import { useTheme } from "@/lib/theme-provider";
+import { useInView } from "@/lib/use-in-view";
 import {
   Plus,
   Bell,
@@ -66,13 +68,15 @@ export default function HomePage() {
   } | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
+  const userId = user?.id;
+
   const deleteReport = useMutation({
     mutationFn: async (reportId: string) => {
       const res = await fetch(`/api/reports/${reportId}`, { method: "DELETE" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Delete failed");
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["reports"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["reports", userId] }),
   });
 
   const editReport = useMutation({
@@ -91,23 +95,23 @@ export default function HomePage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Update failed");
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["reports"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["reports", userId] }),
   });
+
+  const reportsQuery = useReports();
+  const reports = reportsQuery.data;
+  const isLoading = reportsQuery.isLoading;
 
   const {
-    data: reports,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["reports"],
-    queryFn: getReports,
-  });
-
-  const { data: activityPages } = useActivity({ limit: 3 });
+    data: activityPages,
+    fetchNextPage: fetchNextActivity,
+    hasNextPage: hasNextActivity,
+    isFetchingNextPage: isFetchingNextActivity,
+  } = useActivity({ limit: 10 });
   const activities = activityPages?.pages?.flat() ?? [];
 
   const dashboardQuery = useQuery({
-    queryKey: ["dashboard", "home"],
+    queryKey: ["dashboard", userId, "home"],
     queryFn: async () => {
       const res = await fetch("/api/reports/dashboard?period=monthly");
       const json = await res.json();
@@ -125,24 +129,7 @@ export default function HomePage() {
   const netBalance =
     dashboardQuery.data?.netBalance ?? totalIncome - totalExpense;
 
-  if (isLoading) {
-    return (
-      <div className="p-4 pb-16">
-        <header className="flex items-center justify-between mb-6">
-          <div className="w-40 h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="flex gap-2">
-            <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse" />
-            <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse" />
-          </div>
-        </header>
-        <div className="space-y-4">
-          <div className="h-32 bg-(--muted)rounded-xl animate-pulse" />
-          <div className="h-24 bg-(--muted)rounded-xl animate-pulse" />
-          <div className="h-24 bg-(--muted)rounded-xl animate-pulse" />
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <Loading />;
 
   return (
     <div className="p-4 pb-16">
@@ -361,34 +348,41 @@ export default function HomePage() {
         </div>
         <div className="space-y-3">
           {activities.length > 0 ? (
-            activities.slice(0, 3).map((event: any) => (
-              <div
-                key={event.id}
-                className="flex items-start gap-3 p-3 bg-(--card) border border-(--border) rounded-lg"
-              >
-                <span className="text-lg mt-0.5">
-                  {getActivityIcon(event.eventType)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">
-                    {event.actorName}{" "}
-                    {event.eventType === "entry.created"
-                      ? "added"
-                      : event.eventType === "entry.edited"
-                        ? "edited"
-                        : event.eventType === "entry.reverted"
-                          ? "reverted"
-                          : event.eventType.replace(/\./g, " ")}
-                    {event.metadata?.category && ` ${event.metadata.category}`}
-                  </p>
-                  <p className="text-xs text-(--muted-foreground) mt-0.5">
-                    {event.metadata?.amount &&
-                      `${formatCurrency(event.metadata.amount)} · `}
-                    {timeAgo(event.createdAt)}
-                  </p>
+            <>
+              {activities.map((event: any) => (
+                <div
+                  key={event.id}
+                  className="flex items-start gap-3 p-3 bg-(--card) border border-(--border) rounded-lg"
+                >
+                  <span className="text-lg mt-0.5">
+                    {getActivityIcon(event.eventType)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">
+                      {event.actorName}{" "}
+                      {event.eventType === "entry.created"
+                        ? "added"
+                        : event.eventType === "entry.edited"
+                          ? "edited"
+                          : event.eventType === "entry.reverted"
+                            ? "reverted"
+                            : event.eventType.replace(/\./g, " ")}
+                      {event.metadata?.category && ` ${event.metadata.category}`}
+                    </p>
+                    <p className="text-xs text-(--muted-foreground) mt-0.5">
+                      {event.metadata?.amount &&
+                        `${formatCurrency(event.metadata.amount)} · `}
+                      {timeAgo(event.createdAt)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+              <HomeActivitySentinel
+                hasNext={hasNextActivity}
+                isFetching={isFetchingNextActivity}
+                onLoadMore={fetchNextActivity}
+              />
+            </>
           ) : (
             <p
               className="text-sm text-center py-4"
@@ -533,4 +527,40 @@ export default function HomePage() {
       )}
     </div>
   );
+}
+
+function HomeActivitySentinel({
+  hasNext,
+  isFetching,
+  onLoadMore,
+}: {
+  hasNext: boolean;
+  isFetching: boolean;
+  onLoadMore: () => void;
+}) {
+  const { ref, inView } = useInView({ rootMargin: "300px" });
+
+  useEffect(() => {
+    if (inView && hasNext && !isFetching) {
+      onLoadMore();
+    }
+  }, [inView, hasNext, isFetching, onLoadMore]);
+
+  if (isFetching) {
+    return (
+      <div className="flex justify-center py-4">
+        <Loader2 className="w-5 h-5 animate-spin text-(--muted-foreground)" />
+      </div>
+    );
+  }
+
+  if (!hasNext) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-xs text-(--muted-foreground)">No more</p>
+      </div>
+    );
+  }
+
+  return <div ref={ref} className="h-4" />;
 }

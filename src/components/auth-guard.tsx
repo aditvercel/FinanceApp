@@ -3,7 +3,6 @@
 import { useAuth } from "@/lib/auth-provider";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
-import { Loader2 } from "lucide-react";
 import { TabBar } from "./tab-bar";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/onboarding"];
@@ -41,26 +40,12 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   }, [isAuthenticated, isLoading, pathname, router]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{background: "var(--background)"}}>
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin" style={{color: "var(--primary)"}} />
-          <p className="text-sm" style={{color: "var(--muted-foreground)"}}>Loading...</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
   if (!isAuthenticated && !isPublic) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{background: "var(--background)"}}>
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin" style={{color: "var(--primary)"}} />
-          <p className="text-sm" style={{color: "var(--muted-foreground)"}}>Redirecting to login...</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (

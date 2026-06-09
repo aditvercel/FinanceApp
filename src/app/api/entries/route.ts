@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { CreateEntrySchema } from "./contract";
+import { CreateEntrySchema, ListEntriesQuerySchema } from "./contract";
 import { EntryService, PermissionError, ValidationError } from "./service";
 import { EntryRepository } from "./repository";
 import { getRequestId, requireAuth, requireRateLimit } from "@/lib/middleware";
@@ -18,17 +18,25 @@ export async function GET(request: NextRequest) {
   if (rateLimit) return rateLimit;
 
   try {
-    const reportId = request.nextUrl.searchParams.get("reportId");
-    if (!reportId) {
-      return NextResponse.json(err(400, "reportId query parameter required", requestId), { status: 400 });
-    }
+    const rawParams = {
+      reportId: request.nextUrl.searchParams.get("reportId"),
+      cursor: request.nextUrl.searchParams.get("cursor") ?? undefined,
+      limit: request.nextUrl.searchParams.get("limit") ?? undefined,
+    };
+    const params = ListEntriesQuerySchema.parse(rawParams);
 
-    const entries = await service.list(reportId, userId);
-    return NextResponse.json(ok(entries, "Entries retrieved", requestId));
+    const result = await service.list(params.reportId, userId, {
+      cursor: params.cursor,
+      limit: params.limit,
+    });
+    return NextResponse.json(ok(result, "Entries retrieved", requestId));
   } catch (error) {
     console.error("List entries error:", error);
     if (error instanceof PermissionError) {
       return NextResponse.json(err(403, error.message, requestId), { status: 403 });
+    }
+    if (error instanceof ZodError) {
+      return NextResponse.json(err(400, "Invalid query parameters", requestId), { status: 400 });
     }
     return NextResponse.json(err(500, "Internal error", requestId), { status: 500 });
   }

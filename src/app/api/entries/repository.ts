@@ -125,8 +125,13 @@ export class EntryRepository {
     return c;
   }
 
-  async getEntries(reportId: string, userId: string): Promise<EntryWithSnapshot[]> {
-    const { data: entries, error } = await this.client
+  async getEntries(
+    reportId: string,
+    userId: string,
+    opts?: { cursor?: string; limit?: number }
+  ): Promise<{ entries: EntryWithSnapshot[]; nextCursor: string | null }> {
+    const pageSize = opts?.limit ?? 20;
+    const query = this.client
       .from("entries")
       .select(`
         id,
@@ -157,24 +162,25 @@ export class EntryRepository {
       `)
       .eq("report_id", reportId)
       .eq("entry_snapshots.is_current", true)
-      .order("entry_date", { referencedTable: "entry_snapshots", ascending: false });
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(pageSize + 1);
 
-    if (error) throw error;
-
-    const result: EntryWithSnapshot[] = [];
-    for (const row of entries ?? []) {
-      const e = row as unknown as EntryRow & { entry_snapshots: SnapshotRow[] };
-      const snap = e.entry_snapshots?.[0];
-      if (!snap) continue;
-
-      const mapped = mapEntry(e, snap);
-      const lineItems = await this.getLineItems(e.id, snap.version);
-      mapped.lineItems = lineItems;
-      result.push(mapped);
+    if (opts?.cursor) {
+      const [cursorCreatedAt, cursorId] = opts.cursor.split("|");
+      query.or(
+        `created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`
+      );
     }
 
-    return Promise.all(
-      (entries ?? []).map(async (row: Record<string, unknown>) => {
+    const { data: entries, error } = await query;
+    if (error) throw error;
+
+    const hasMore = (entries?.length ?? 0) > pageSize;
+    const slice = (entries ?? []).slice(0, pageSize);
+
+    const result = await Promise.all(
+      slice.map(async (row: Record<string, unknown>) => {
         const e = row as unknown as EntryRow & { entry_snapshots: SnapshotRow[] };
         const snap = e.entry_snapshots?.[0];
         const mapped = mapEntry(e, snap);
@@ -185,6 +191,14 @@ export class EntryRepository {
         return mapped;
       })
     );
+
+    let nextCursor: string | null = null;
+    if (hasMore && entries && entries.length > 0) {
+      const last = entries[pageSize - 1] as unknown as EntryRow & { entry_snapshots: SnapshotRow[] };
+      nextCursor = `${last.created_at}|${last.id}`;
+    }
+
+    return { entries: result, nextCursor };
   }
 
   async getEntry(id: string, userId: string): Promise<EntryWithSnapshot | null> {

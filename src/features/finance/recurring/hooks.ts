@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth-provider";
 import {
   getRecurringTemplates,
   createRecurringTemplate,
@@ -9,42 +10,50 @@ import {
 } from "./api";
 
 export function useRecurringTemplates(reportId: string) {
+  const { user } = useAuth();
+  const userId = user?.id;
   return useQuery({
-    queryKey: ["recurring", reportId],
+    queryKey: ["recurring", userId, reportId],
     queryFn: () => getRecurringTemplates(reportId),
-    enabled: !!reportId,
+    enabled: !!reportId && !!userId,
   });
 }
 
 export function useCreateRecurringTemplate() {
+  const { user } = useAuth();
+  const userId = user?.id;
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createRecurringTemplate,
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: ["recurring", data?.reportId],
+        queryKey: ["recurring", userId, data?.reportId],
       });
     },
   });
 }
 
 export function useUpdateRecurringTemplate() {
+  const { user } = useAuth();
+  const userId = user?.id;
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       updateRecurringTemplate(id, data),
-    onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["recurring"] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recurring", userId] });
     },
   });
 }
 
 export function useDeleteRecurringTemplate() {
+  const { user } = useAuth();
+  const userId = user?.id;
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteRecurringTemplate,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recurring"] });
+      queryClient.invalidateQueries({ queryKey: ["recurring", userId] });
     },
   });
 }

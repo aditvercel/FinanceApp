@@ -58,7 +58,14 @@ export const ScanResultSchema = z.object({
   categoryOriginal: z.string().optional(),
 });
 
+export const ListEntriesQuerySchema = z.object({
+  reportId: z.string().uuid(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+});
+
 export type ScanResult = z.infer<typeof ScanResultSchema>;
 export type CreateEntry = z.infer<typeof CreateEntrySchema>;
 export type EditEntry = z.infer<typeof EditEntrySchema>;
 export type RevertEntry = z.infer<typeof RevertEntrySchema>;
+export type ListEntriesQuery = z.infer<typeof ListEntriesQuerySchema>;
