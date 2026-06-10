@@ -59,8 +59,15 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
+function safeDate(value: string | undefined | null): Date {
+  if (!value) return new Date(0);
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? new Date(0) : d;
+}
+
 function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
+  const d = safeDate(dateStr);
+  const diff = Date.now() - d.getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
@@ -214,7 +221,7 @@ export default function ReportDetailPage() {
   const sortedDays = Array.from(dayMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   const { 0: chartLabels, 1: chartAmounts } = sortedDays.reduce<[string[], number[]]>(
     (acc, [d, v]) => {
-      const dt = new Date(d + "T00:00:00");
+      const dt = safeDate(d);
       acc[0].push(dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
       acc[1].push((acc[1].length > 0 ? acc[1][acc[1].length - 1] : 0) + v);
       return acc;
@@ -243,7 +250,7 @@ export default function ReportDetailPage() {
   }
   const sortedWeeks = Array.from(weekMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   const barLabels = sortedWeeks.map(([w]) => {
-    const dt = new Date(w + "T00:00:00");
+    const dt = safeDate(w);
     return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   });
   const barIncome = sortedWeeks.map(([, w]) => w.income);
