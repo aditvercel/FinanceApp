@@ -27,6 +27,20 @@
     "react-dom": "19.2.4",
     "zod": "^4.4.3"
   },
+  "browserslist": {
+    "production": [
+      "> 0.2%",
+      "not dead",
+      "not op_mini all",
+      "safari >= 11",
+      "ios_saf >= 11"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
