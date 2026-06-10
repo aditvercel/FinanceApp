@@ -7,6 +7,7 @@ import { AuthGuard } from "@/components/auth-guard";
 import { ApiGuard } from "@/components/api-guard";
 import { ToastProvider } from "@/lib/toat";
 import { ThemeProvider } from "@/lib/theme-provider";
+import { Suspense } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,9 +39,11 @@ export default function RootLayout({
           <ThemeProvider>
             <AuthProvider>
               <ApiGuard>
-                <AuthGuard>
-                  {children}
-                </AuthGuard>
+                <Suspense fallback={null}>
+                  <AuthGuard>
+                    {children}
+                  </AuthGuard>
+                </Suspense>
               </ApiGuard>
             </AuthProvider>
           </ThemeProvider>

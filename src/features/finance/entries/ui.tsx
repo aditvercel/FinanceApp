@@ -6,6 +6,7 @@ import { useCreateEntry } from "./hooks";
 import { useCategories } from "@/features/finance/categories/hooks";
 import type { ReportCategory } from "@/features/finance/categories/api";
 import { ReceiptScanFlow } from "./scan/ui";
+import { safeGetItem, safeSetItem } from "@/lib/storage";
 
 const FALLBACK_CATEGORIES = [
   "Food",
@@ -40,12 +41,12 @@ export function AddExpenseSheet({
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
   const [category, setCategory] = useState(
-    () => (globalThis.window !== undefined ? localStorage.getItem(LAST_CATEGORY_KEY) : null) || FALLBACK_CATEGORIES[0]
+    () => safeGetItem(LAST_CATEGORY_KEY) || FALLBACK_CATEGORIES[0]
   );
   const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [note, setNote] = useState("");
   const [manualReportId, setManualReportId] = useState(
-    () => (globalThis.window !== undefined ? localStorage.getItem(LAST_REPORT_KEY) : null) || ""
+    () => safeGetItem(LAST_REPORT_KEY) || ""
   );
   const [reports, setReports] = useState<
     Array<{ id: string; name: string }>
@@ -87,10 +88,8 @@ export function AddExpenseSheet({
     const numAmount = Number.parseFloat(amount);
     if (Number.isNaN(numAmount) || numAmount <= 0) return;
 
-    if (globalThis.window !== undefined) {
-      localStorage.setItem(LAST_REPORT_KEY, reportId);
-      localStorage.setItem(LAST_CATEGORY_KEY, category);
-    }
+    safeSetItem(LAST_REPORT_KEY, reportId);
+    safeSetItem(LAST_CATEGORY_KEY, category);
 
     try {
       await createEntry.mutateAsync({

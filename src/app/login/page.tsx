@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/lib/auth-provider";
+import { safeGetItem } from "@/lib/storage";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,9 +21,7 @@ export default function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
-      const onboardingDone =
-        globalThis.window !== undefined &&
-        localStorage.getItem("onboarding_completed") === "true";
+      const onboardingDone = safeGetItem("onboarding_completed") === "true";
       router.replace(onboardingDone ? "/" : "/onboarding");
     }
   }, [isAuthenticated, authLoading, router]);
@@ -48,9 +47,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       await login(email.trim(), password);
-      const onboardingDone =
-        globalThis.window !== undefined &&
-        localStorage.getItem("onboarding_completed") === "true";
+      const onboardingDone = safeGetItem("onboarding_completed") === "true";
       router.replace(onboardingDone ? "/" : "/onboarding");
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");

@@ -2,14 +2,14 @@
 
 import { useAuth } from "@/lib/auth-provider";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, type ReactNode, Suspense } from "react";
 import { TabBar } from "./tab-bar";
+import { safeGetItem } from "@/lib/storage";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/onboarding"];
 
 function isOnboardingCompleted(): boolean {
-  if (globalThis.window === undefined) return true;
-  return localStorage.getItem("onboarding_completed") === "true";
+  return safeGetItem("onboarding_completed") === "true";
 }
 
 export function AuthGuard({ children }: { children: ReactNode }) {

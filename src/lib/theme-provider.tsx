@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { safeGetItem, safeSetItem } from "@/lib/storage";
 
 type Theme = "light" | "dark";
 
@@ -14,7 +15,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("theme") as Theme | null;
+    const stored = safeGetItem("theme") as Theme | null;
     const initial = stored ?? "light";
     setTheme(initial);
     document.documentElement.classList.toggle("dark", initial === "dark");
@@ -25,7 +26,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const next = theme === "light" ? "dark" : "light";
     setTheme(next);
     document.documentElement.classList.toggle("dark", next === "dark");
-    localStorage.setItem("theme", next);
+    safeSetItem("theme", next);
   };
 
   if (!mounted) return <>{children}</>;
