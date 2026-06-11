@@ -31,8 +31,8 @@
     "production": [
       "> 0.1%",
       "not dead",
-      "safari >= 5.1",
-      "ios_saf >= 5.1",
+      "safari 5.1",
+      "ios_saf 5.1",
       "android >= 4"
     ],
     "development": [
@@ -42,6 +42,10 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-transform-arrow-functions": "^7.29.7",
+    "@babel/plugin-transform-class-properties": "^7.29.7",
+    "@babel/plugin-transform-class-static-block": "^7.29.7",
+    "@babel/plugin-transform-private-methods": "^7.29.7",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

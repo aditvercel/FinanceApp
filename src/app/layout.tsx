@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/lib/query-provider";
 import { AuthProvider } from "@/lib/auth-provider";
@@ -8,16 +7,6 @@ import { ApiGuard } from "@/components/api-guard";
 import { ToastProvider } from "@/lib/toat";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { Suspense } from "react";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Finance Tracker",
@@ -30,10 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col" style={{background: "var(--background)", color: "var(--foreground)"}}>
         <QueryProvider>
           <ThemeProvider>
