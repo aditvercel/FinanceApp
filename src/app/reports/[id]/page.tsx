@@ -214,6 +214,23 @@ export default function ReportDetailPage() {
     );
   }
 
+  if (!report) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <p className="text-lg font-medium mb-2">Report not found</p>
+        <p className="text-sm text-(--muted-foreground) mb-4">
+          This report may have been deleted or you may not have access.
+        </p>
+        <button
+          onClick={() => router.push("/")}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
+        >
+          Back to Home
+        </button>
+      </div>
+    );
+  }
+
   const totalIncome = dashboardQuery.data?.totalIncome ?? 0;
   const totalExpense = dashboardQuery.data?.totalExpense ?? 0;
   const netBalance = dashboardQuery.data?.netBalance ?? (totalIncome - totalExpense);

@@ -20,7 +20,8 @@ export type CreateEventData = {
 
 export async function getEvents(
   query: ActivityQuery,
-  userId: string
+  userId: string,
+  reportIds?: string[]
 ): Promise<EventRow[]> {
   const client = supabase;
 
@@ -39,6 +40,8 @@ export async function getEvents(
 
   if (query.reportId) {
     dbQuery = dbQuery.eq("report_id", query.reportId);
+  } else if (reportIds && reportIds.length > 0) {
+    dbQuery = dbQuery.in("report_id", reportIds);
   }
 
   if (query.eventType) {
@@ -65,16 +68,23 @@ export async function getAccessibleReportIds(
   const client = supabase;
 
   const [ownedResult, memberResult] = await Promise.all([
-    client.from("reports").select("id").eq("owner_id", userId),
+    client.from("reports").select("id").eq("owner_id", userId).is("deleted_at", null),
     client
       .from("report_members")
-      .select("report_id")
-      .eq("user_id", userId),
+      .select("report_id, reports!inner(deleted_at)")
+      .eq("user_id", userId)
+      .is("reports.deleted_at", null),
   ]);
 
-  const owned = (ownedResult.data ?? []).map((r) => r.id);
-  const member = (memberResult.data ?? []).map((r) => r.report_id);
+  const owned = (ownedResult.data ?? []).map((r: { id: string }) => r.id);
+  const member = (memberResult.data ?? []).map((r: { report_id: string }) => r.report_id);
   return [...new Set([...owned, ...member])];
+}
+
+export async function clearEvents(reportIds: string[]): Promise<void> {
+  if (reportIds.length === 0) return;
+  const client = supabase;
+  await client.from("activity_events").delete().in("report_id", reportIds);
 }
 
 export async function createEvent(data: CreateEventData): Promise<void> {

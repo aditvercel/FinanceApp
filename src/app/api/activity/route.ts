@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ActivityQuerySchema } from "./contract";
-import { listEvents } from "./service";
+import { listEvents, clearActivity } from "./service";
 import { ok, err } from "@/lib/types";
 import { requireAuth, requireRateLimit, getRequestId } from "@/lib/middleware";
 
@@ -29,5 +29,24 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Activity list error:", error);
     return NextResponse.json(err(400, "Invalid query parameters", requestId), { status: 400 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const requestId = getRequestId(request);
+
+  const auth = await requireAuth(request);
+  if (auth instanceof NextResponse) return auth;
+  const userId = auth;
+
+  const rateLimit = requireRateLimit(request, userId, "heavy");
+  if (rateLimit) return rateLimit;
+
+  try {
+    await clearActivity(userId);
+    return NextResponse.json(ok(null, "Activity cleared", requestId));
+  } catch (error) {
+    console.error("Activity clear error:", error);
+    return NextResponse.json(err(500, "Failed to clear activity", requestId), { status: 500 });
   }
 }

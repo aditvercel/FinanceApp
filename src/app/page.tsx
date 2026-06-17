@@ -68,6 +68,7 @@ export default function HomePage() {
     action: "edit" | "delete";
     report: any;
   } | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [renameValue, setRenameValue] = useState("");
 
   const userId = user?.id;
@@ -98,6 +99,15 @@ export default function HomePage() {
       if (!res.ok) throw new Error(json.message || "Update failed");
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["reports", userId] }),
+  });
+
+  const clearActivity = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/activity", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || "Clear failed");
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["activity", userId] }),
   });
 
   const reportsQuery = useReports();
@@ -335,13 +345,22 @@ export default function HomePage() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">Recent Activity</h2>
-          <Link
-            href="/activity"
-            className="text-sm"
-            style={{ color: "var(--primary)" }}
-          >
-            View all
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              disabled={clearActivity.isPending || activities.length === 0}
+              className="text-sm text-(--muted-foreground) hover:text-(--foreground) disabled:opacity-30"
+            >
+              {clearActivity.isPending ? "Clearing..." : "Clear"}
+            </button>
+            <Link
+              href="/activity"
+              className="text-sm"
+              style={{ color: "var(--primary)" }}
+            >
+              View all
+            </Link>
+          </div>
         </div>
         <div className="space-y-3">
           {activities.length > 0 ? (
@@ -589,6 +608,43 @@ export default function HomePage() {
                 )}
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {showClearConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-(--card) rounded-xl w-full max-w-sm p-5 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold">Clear Activity</h3>
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                className="p-1 hover:bg-(--muted)rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-(--foreground)">
+              Are you sure you want to clear all recent activity? This cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                className="px-4 py-2 border border-(--border) rounded-lg text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  clearActivity.mutate();
+                  setShowClearConfirm(false);
+                }}
+                disabled={clearActivity.isPending}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm disabled:opacity-50"
+              >
+                {clearActivity.isPending ? "Clearing..." : "Clear"}
+              </button>
+            </div>
           </div>
         </div>
       )}

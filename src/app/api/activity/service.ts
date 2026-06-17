@@ -1,5 +1,10 @@
 import type { ActivityQuery, ActivityEvent } from "./contract";
-import { getEvents, getAccessibleReportIds, getUsersDisplayNames } from "./repository";
+import { getEvents, getAccessibleReportIds, getUsersDisplayNames, clearEvents } from "./repository";
+
+export async function clearActivity(userId: string): Promise<void> {
+  const reportIds = await getAccessibleReportIds(userId);
+  await clearEvents(reportIds);
+}
 
 export async function listEvents(
   query: ActivityQuery,
@@ -15,7 +20,7 @@ export async function listEvents(
     return [];
   }
 
-  const events = await getEvents(query, userId);
+  const events = await getEvents(query, userId, reportIds);
 
   if (events.length === 0) {
     return [];
