@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useReports } from "@/features/finance/reports/hooks";
@@ -25,6 +25,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { AvatarCircle, AvatarStack } from "@/components/avatar";
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("id-ID", {
@@ -59,6 +60,7 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function HomePage() {
+  const router = useRouter();
   const { user } = useAuth();
   const { theme, toggle: toggleTheme } = useTheme();
   const qc = useQueryClient();
@@ -324,12 +326,7 @@ export default function HomePage() {
                 <Plus className="w-4 h-4" />
                 Create Report
               </Link>
-              <Link
-                href="/onboarding"
-                className="inline-flex items-center gap-1 px-4 py-2 border border-(--border) rounded-lg text-sm text-gray-700"
-              >
-                Show onboarding
-              </Link>
+
             </div>
           </div>
         )}
@@ -349,34 +346,104 @@ export default function HomePage() {
         <div className="space-y-3">
           {activities.length > 0 ? (
             <>
-              {activities.map((event: any) => (
-                <div
-                  key={event.id}
-                  className="flex items-start gap-3 p-3 bg-(--card) border border-(--border) rounded-lg"
-                >
-                  <span className="text-lg mt-0.5">
-                    {getActivityIcon(event.eventType)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">
-                      {event.actorName}{" "}
-                      {event.eventType === "entry.created"
-                        ? "added"
-                        : event.eventType === "entry.edited"
-                          ? "edited"
-                          : event.eventType === "entry.reverted"
-                            ? "reverted"
-                            : event.eventType.replace(/\./g, " ")}
-                      {event.metadata?.category && ` ${event.metadata.category}`}
-                    </p>
-                    <p className="text-xs text-(--muted-foreground) mt-0.5">
-                      {event.metadata?.amount &&
-                        `${formatCurrency(event.metadata.amount)} · `}
-                      {timeAgo(event.createdAt)}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              {(() => {
+                const grouped: any[] = [];
+                for (let i = 0; i < activities.length; i++) {
+                  const e = activities[i];
+                  const entryId = e.metadata?.entryId;
+                  const next = activities[i + 1];
+                  if (
+                    entryId &&
+                    next?.metadata?.entryId === entryId
+                  ) {
+                    const actors = [e, next].map((ev: any) => ({
+                      name: ev.actorName,
+                      avatarUrl: ev.actorAvatarUrl,
+                    }));
+                    const latest = next;
+                    grouped.push(
+                      <div
+                        key={`group-${entryId}-${i}`}
+                        onClick={() => {
+                          if (e.reportId && entryId) {
+                            router.push(`/reports/${e.reportId}?entryId=${entryId}`);
+                          } else if (e.reportId) {
+                            router.push(`/reports/${e.reportId}`);
+                          }
+                        }}
+                        className={`flex items-start gap-3 p-3 bg-(--card) border border-(--border) rounded-lg ${
+                          e.reportId ? "cursor-pointer hover:bg-gray-50" : ""
+                        }`}
+                      >
+                        <div className="mt-0.5 shrink-0">
+                          <AvatarStack users={actors} size="sm" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">
+                            {latest.eventType === "entry.created"
+                              ? "added"
+                              : latest.eventType === "entry.edited"
+                                ? "edited"
+                                : latest.eventType === "entry.reverted"
+                                  ? "reverted"
+                                  : latest.eventType.replace(/\./g, " ")}
+                            {latest.metadata?.category && ` ${latest.metadata.category}`}
+                          </p>
+                          <p className="text-xs text-(--muted-foreground) mt-0.5">
+                            {latest.metadata?.amount &&
+                              `${formatCurrency(latest.metadata.amount)} · `}
+                            {timeAgo(latest.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                    i++;
+                  } else {
+                    grouped.push(
+                      <div
+                        key={e.id}
+                        onClick={() => {
+                          if (e.reportId && entryId) {
+                            router.push(`/reports/${e.reportId}?entryId=${entryId}`);
+                          } else if (e.reportId) {
+                            router.push(`/reports/${e.reportId}`);
+                          }
+                        }}
+                        className={`flex items-start gap-3 p-3 bg-(--card) border border-(--border) rounded-lg ${
+                          e.reportId ? "cursor-pointer hover:bg-gray-50" : ""
+                        }`}
+                      >
+                        <div className="mt-0.5 shrink-0">
+                          <AvatarCircle
+                            name={e.actorName}
+                            avatarUrl={e.actorAvatarUrl}
+                            size="sm"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">
+                            {e.actorName}{" "}
+                            {e.eventType === "entry.created"
+                              ? "added"
+                              : e.eventType === "entry.edited"
+                                ? "edited"
+                                : e.eventType === "entry.reverted"
+                                  ? "reverted"
+                                  : e.eventType.replace(/\./g, " ")}
+                            {e.metadata?.category && ` ${e.metadata.category}`}
+                          </p>
+                          <p className="text-xs text-(--muted-foreground) mt-0.5">
+                            {e.metadata?.amount &&
+                              `${formatCurrency(e.metadata.amount)} · `}
+                            {timeAgo(e.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+                }
+                return grouped;
+              })()}
               <HomeActivitySentinel
                 hasNext={hasNextActivity}
                 isFetching={isFetchingNextActivity}

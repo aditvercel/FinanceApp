@@ -30,15 +30,19 @@ export async function listEvents(
   }
 
   const missingActorIds = [...new Set(events.map((e) => e.actor_id).filter((id) => !metaNames[id]))];
-  const dbNames = missingActorIds.length > 0 ? await getUsersDisplayNames(missingActorIds) : {};
+  const userProfiles = missingActorIds.length > 0 ? await getUsersDisplayNames(missingActorIds) : {};
 
-  return events.map((e) => ({
-    id: e.id,
-    reportId: e.report_id,
-    actorId: e.actor_id,
-    actorName: metaNames[e.actor_id] ?? dbNames[e.actor_id] ?? "Unknown",
-    eventType: e.event_type,
-    metadata: e.metadata as Record<string, any>,
-    createdAt: e.created_at,
-  }));
+  return events.map((e) => {
+    const profile = userProfiles[e.actor_id];
+    return {
+      id: e.id,
+      reportId: e.report_id,
+      actorId: e.actor_id,
+      actorName: metaNames[e.actor_id] ?? profile?.displayName ?? "Unknown",
+      actorAvatarUrl: profile?.avatarUrl ?? null,
+      eventType: e.event_type,
+      metadata: e.metadata as Record<string, any>,
+      createdAt: e.created_at,
+    };
+  });
 }

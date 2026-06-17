@@ -37,13 +37,13 @@ create type recurrence_interval as enum ('weekly', 'monthly', 'yearly');
 -- 2. Core Tables
 -- ============================================================
 
--- 2a. User Preferences (onboarding, settings)
+-- 2a. User Preferences
 create table user_preferences (
   id                  uuid primary key default gen_random_uuid(),
   user_id             uuid unique not null references auth.users(id) on delete cascade,
-  onboarding_completed boolean not null default false,
   default_currency    text not null default 'IDR',
   display_name        text,
+  avatar_url          text,
   created_at          timestamptz default now(),
   updated_at          timestamptz default now()
 );

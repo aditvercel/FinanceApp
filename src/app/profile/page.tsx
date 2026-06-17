@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-provider";
+import { AvatarCircle } from "@/components/avatar";
 
 interface ProfileRowProps {
   icon: React.ReactNode;
@@ -116,9 +117,7 @@ export default function ProfilePage() {
       </header>
 
       <div className="flex items-center gap-4 mb-8 p-4 bg-(--card) border border-(--border) rounded-xl">
-        <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold shrink-0">
-          {user || authUser ? initials : <User className="w-8 h-8" />}
-        </div>
+        <AvatarCircle name={displayName} avatarUrl={user?.avatarUrl || authUser?.avatarUrl} size="lg" className="w-16 h-16 text-xl border-2" />
         <div className="min-w-0">
           <h2 className="text-xl font-semibold text-(--foreground) truncate">
             {displayName}

@@ -26,6 +26,8 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, displayName?: string) => Promise<{ emailConfirmationRequired: boolean }>;
   logout: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+  updateProfile: (data: { displayName?: string; avatarUrl?: string | null }) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -115,6 +117,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.replace("/login");
   }, [router]);
 
+  const refreshProfile = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase.auth.getUser();
+    if (data?.user) {
+      setUser(toAppUser(data.user));
+    }
+  }, []);
+
+  const updateProfile = useCallback(async (data: { displayName?: string; avatarUrl?: string | null }) => {
+    const res = await fetch("/api/auth/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || "Failed to update profile");
+    await refreshProfile();
+  }, [refreshProfile]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -124,6 +145,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         signup,
         logout,
+        refreshProfile,
+        updateProfile,
       }}
     >
       {children}

@@ -97,12 +97,17 @@ export async function createEvent(data: CreateEventData): Promise<void> {
   }
 }
 
+export type UserProfile = {
+  displayName: string;
+  avatarUrl: string | null;
+};
+
 export async function getUsersDisplayNames(
   userIds: string[]
-): Promise<Record<string, string>> {
+): Promise<Record<string, UserProfile>> {
   if (userIds.length === 0) return {};
 
-  const map: Record<string, string> = {};
+  const map: Record<string, UserProfile> = {};
 
   const serviceClient = getServiceClient();
 
@@ -110,12 +115,15 @@ export async function getUsersDisplayNames(
   try {
     const { data } = await serviceClient
       .from("user_preferences")
-      .select("user_id, display_name")
+      .select("user_id, display_name, avatar_url")
       .in("user_id", userIds);
 
     if (data) {
       for (const row of data) {
-        map[row.user_id] = row.display_name || "User";
+        map[row.user_id] = {
+          displayName: row.display_name || "User",
+          avatarUrl: (row as any).avatar_url || null,
+        };
       }
     }
   } catch {
@@ -128,14 +136,19 @@ export async function getUsersDisplayNames(
     try {
       const { data: authData } = await serviceClient.auth.admin.getUserById(id);
       const name = authData?.user?.user_metadata?.display_name ?? "User";
-      map[id] = name;
+      const avatarUrl = authData?.user?.user_metadata?.avatar_url ?? null;
+      map[id] = { displayName: name, avatarUrl };
       // Upsert for future lookups
       try {
-        await serviceClient.from("user_preferences").upsert({ user_id: id, display_name: name });
+        await serviceClient.from("user_preferences").upsert({
+          user_id: id,
+          display_name: name,
+          avatar_url: avatarUrl,
+        });
       } catch {
       }
     } catch {
-      map[id] = "User";
+      map[id] = { displayName: "User", avatarUrl: null };
     }
   }
 

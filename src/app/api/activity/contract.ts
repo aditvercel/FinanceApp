@@ -12,6 +12,7 @@ export const ActivityEventSchema = z.object({
   reportId: z.string(),
   actorId: z.string(),
   actorName: z.string(),
+  actorAvatarUrl: z.string().nullable().optional(),
   eventType: z.string(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.string(),

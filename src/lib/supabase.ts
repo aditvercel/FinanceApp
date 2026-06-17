@@ -76,7 +76,9 @@ function createMockClient(): SupabaseClient {
         createSignedUrl: () => Promise.resolve({ data: null, error: null }),
         list: () => Promise.resolve({ data: [], error: null }),
         remove: () => Promise.resolve({ data: null, error: null }),
+        getPublicUrl: () => ({ data: { publicUrl: "" } }),
       }),
+      createBucket: () => Promise.resolve({ data: null, error: null }),
     },
     auth: {
       getSession: () => Promise.resolve({ data: { session: null }, error: null }),

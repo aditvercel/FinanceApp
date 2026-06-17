@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useActivity } from "@/features/activity/hooks";
 import { ArrowLeft, Loader2, ChevronDown } from "lucide-react";
+import { AvatarCircle, AvatarStack } from "@/components/avatar";
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("id-ID", {
@@ -58,15 +59,14 @@ function getEventIcon(eventType: string): string {
 }
 
 function getEventDescription(event: any): string {
-  const actor = event.actorName || "Someone";
   const meta = event.metadata || {};
   switch (event.eventType) {
     case "entry.created":
-      return `${actor} added ${meta.category || "an entry"}`;
+      return `added ${meta.category || "an entry"}`;
     case "entry.edited":
-      return `${actor} edited ${meta.category || "an entry"}`;
+      return `edited ${meta.category || "an entry"}`;
     case "entry.reverted":
-      return `${actor} reverted ${meta.category || "an entry"} to v${meta.version || "?"}`;
+      return `reverted ${meta.category || "an entry"} to v${meta.version || "?"}`;
     case "member.joined":
       return `${meta.targetDisplayName || "Someone"} joined`;
     case "member.promoted":
@@ -76,7 +76,7 @@ function getEventDescription(event: any): string {
     case "recurring.generated":
       return `Recurring: ${meta.category || "Entry"} generated`;
     default:
-      return `${actor} ${event.eventType.replace(/\./g, " ")}`;
+      return event.eventType.replace(/\./g, " ");
   }
 }
 
@@ -157,32 +157,112 @@ export default function ActivityPage() {
         </div>
       ) : Object.keys(groupedByDay).length > 0 ? (
         <div className="space-y-6">
-          {Object.entries(groupedByDay).map(([dayKey, events]) => (
+              {Object.entries(groupedByDay).map(([dayKey, dayEvents]) => (
             <div key={dayKey}>
               <h3 className="text-sm font-medium text-gray-500 mb-3">
-                {getDayLabel(events[0].createdAt)}
+                {getDayLabel(dayEvents[0].createdAt)}
               </h3>
               <div className="space-y-2">
-                {events.map((event: any) => (
-                  <div
-                    key={event.id}
-                    className="flex items-start gap-3 p-3 bg-(--card) border border-gray-100 rounded-lg"
-                  >
-                    <span className="text-lg mt-0.5">
-                      {getEventIcon(event.eventType)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium">
-                        {getEventDescription(event)}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {event.metadata?.amount &&
-                          `${formatCurrency(event.metadata.amount)} · `}
-                        {timeAgo(event.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                {(() => {
+                  const rows: any[] = [];
+                  for (let i = 0; i < dayEvents.length; i++) {
+                    const event = dayEvents[i];
+                    const entryId = event.metadata?.entryId;
+                    const next = dayEvents[i + 1];
+                    if (
+                      entryId &&
+                      next?.metadata?.entryId === entryId
+                    ) {
+                      const actors = [event, next].map((ev: any) => ({
+                        name: ev.actorName,
+                        avatarUrl: ev.actorAvatarUrl,
+                      }));
+                      const latest = next;
+                      rows.push(
+                        <div
+                          key={`group-${entryId}-${i}`}
+                          onClick={() => {
+                            if (event.reportId && entryId) {
+                              router.push(`/reports/${event.reportId}?entryId=${entryId}`);
+                            } else if (event.reportId) {
+                              router.push(`/reports/${event.reportId}`);
+                            }
+                          }}
+                          className={`flex items-start gap-3 p-3 bg-(--card) border border-gray-100 rounded-lg ${
+                            event.reportId ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""
+                          }`}
+                        >
+                          <div className="mt-0.5 shrink-0">
+                            <AvatarStack users={actors} size="sm" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">
+                                {actors.map(a => a.name).join(", ")}
+                              </span>
+                              <span className="text-xs text-gray-500 shrink-0">
+                                {timeAgo(latest.createdAt)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-(--foreground)">
+                              {getEventDescription(latest)}
+                            </p>
+                            {latest.metadata?.amount && (
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {formatCurrency(latest.metadata.amount)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                      i++;
+                    } else {
+                      rows.push(
+                        <div
+                          key={event.id}
+                          onClick={() => {
+                            const eId = event.metadata?.entryId;
+                            if (event.reportId && eId) {
+                              router.push(`/reports/${event.reportId}?entryId=${eId}`);
+                            } else if (event.reportId) {
+                              router.push(`/reports/${event.reportId}`);
+                            }
+                          }}
+                          className={`flex items-start gap-3 p-3 bg-(--card) border border-gray-100 rounded-lg ${
+                            event.reportId ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""
+                          }`}
+                        >
+                          <div className="mt-0.5 shrink-0">
+                            <AvatarCircle
+                              name={event.actorName}
+                              avatarUrl={event.actorAvatarUrl}
+                              size="sm"
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">
+                                {event.actorName}
+                              </span>
+                              <span className="text-xs text-gray-500 shrink-0">
+                                {timeAgo(event.createdAt)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-(--foreground)">
+                              {getEventDescription(event)}
+                            </p>
+                            {event.metadata?.amount && (
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {formatCurrency(event.metadata.amount)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+                  }
+                  return rows;
+                })()}
               </div>
             </div>
           ))}

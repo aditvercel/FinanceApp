@@ -17,7 +17,9 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useActivity } from "./hooks";
+import { AvatarCircle, AvatarStack } from "@/components/avatar";
 const EVENT_ICONS: Record<string, { icon: typeof PlusCircle; color: string }> = {
   "entry.created": { icon: PlusCircle, color: "text-green-600" },
   "entry.edited": { icon: Pencil, color: "text-blue-600" },
@@ -45,8 +47,11 @@ function getDefaultIcon() {
 
 interface ActivityEvent {
   id: string;
+  reportId?: string;
   eventType: string;
   actor?: { displayName: string };
+  actorName?: string;
+  actorAvatarUrl?: string | null;
   metadata?: {
     category?: string;
     amount?: number;
@@ -57,6 +62,7 @@ interface ActivityEvent {
     percentage?: number;
     budgetAmount?: number;
     reportName?: string;
+    entryId?: string;
   };
   createdAt: string;
 }
@@ -133,6 +139,7 @@ interface ActivityFeedProps {
 }
 
 export function ActivityFeed({ reportId }: ActivityFeedProps) {
+  const router = useRouter();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useActivity({ reportId });
   const observerRef = useRef<IntersectionObserver | null>(null);
 
@@ -195,39 +202,106 @@ export function ActivityFeed({ reportId }: ActivityFeedProps) {
             {day}
           </h3>
           <div className="space-y-1">
-            {events.map((event: ActivityEvent, idx: number) => {
-              const { icon: Icon, color } = EVENT_ICONS[event.eventType] || getDefaultIcon();
-              const isLast = idx === events.length - 1;
-              return (
-                <div
-                  key={event.id}
-                  ref={isLast ? lastEventRef : undefined}
-                  className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className={`mt-0.5 ${color}`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium truncate">
-                        {event.actor?.displayName || "You"}
-                      </span>
-                      <span className="text-xs text-gray-500 shrink-0">
-                        {formatTimeAgo(event.createdAt)}
-                      </span>
+            {(() => {
+              const rows: React.ReactNode[] = [];
+              for (let i = 0; i < events.length; i++) {
+                const event = events[i];
+                const entryId = event.metadata?.entryId;
+                const next = events[i + 1];
+                const isLast = i === events.length - 1;
+                if (
+                  entryId &&
+                  next?.metadata?.entryId === entryId
+                ) {
+                  const actors = [event, next].map((ev) => {
+                    const name = ev.actor?.displayName || ev.actorName || "You";
+                    return { name, avatarUrl: ev.actorAvatarUrl };
+                  });
+                  const latest = next;
+                  rows.push(
+                    <div
+                      key={`group-${entryId}-${i}`}
+                      ref={isLast ? lastEventRef : undefined}
+                      onClick={() => {
+                        if (event.reportId && entryId) {
+                          router.push(`/reports/${event.reportId}?entryId=${entryId}`);
+                        } else if (event.reportId) {
+                          router.push(`/reports/${event.reportId}`);
+                        }
+                      }}
+                      className={`flex items-start gap-3 p-2 rounded-lg transition-colors ${
+                        event.reportId ? "cursor-pointer hover:bg-gray-50" : ""
+                      }`}
+                    >
+                      <div className="mt-0.5 shrink-0">
+                        <AvatarStack users={actors} size="sm" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium truncate">
+                            {actors.map(a => a.name).join(", ")}
+                          </span>
+                          <span className="text-xs text-gray-500 shrink-0">
+                            {formatTimeAgo(latest.createdAt)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-(--foreground) truncate">
+                          {getEventDescription(latest)}
+                        </p>
+                        {latest.metadata?.reportName && (
+                          <p className="text-xs text-gray-400 truncate">
+                            {latest.metadata.reportName}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-sm text-(--foreground) truncate">
-                      {getEventDescription(event)}
-                    </p>
-                    {event.metadata?.reportName && (
-                      <p className="text-xs text-gray-400 truncate">
-                        {event.metadata.reportName}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                  i++;
+                } else {
+                  const name = event.actor?.displayName || event.actorName || "You";
+                  rows.push(
+                    <div
+                      key={event.id}
+                      ref={isLast ? lastEventRef : undefined}
+                      onClick={() => {
+                        const eId = event.metadata?.entryId;
+                        if (event.reportId && eId) {
+                          router.push(`/reports/${event.reportId}?entryId=${eId}`);
+                        } else if (event.reportId) {
+                          router.push(`/reports/${event.reportId}`);
+                        }
+                      }}
+                      className={`flex items-start gap-3 p-2 rounded-lg transition-colors ${
+                        event.reportId ? "cursor-pointer hover:bg-gray-50" : ""
+                      }`}
+                    >
+                      <div className="mt-0.5 shrink-0">
+                        <AvatarCircle name={name} avatarUrl={event.actorAvatarUrl} size="sm" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium truncate">
+                            {name}
+                          </span>
+                          <span className="text-xs text-gray-500 shrink-0">
+                            {formatTimeAgo(event.createdAt)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-(--foreground) truncate">
+                          {getEventDescription(event)}
+                        </p>
+                        {event.metadata?.reportName && (
+                          <p className="text-xs text-gray-400 truncate">
+                            {event.metadata.reportName}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+              }
+              return rows;
+            })()}
           </div>
         </div>
       ))}

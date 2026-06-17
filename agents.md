@@ -462,7 +462,7 @@ A collaborative personal finance tracker. Users create **Reports** — a named l
     model.ts
     ui.tsx
     join/
-      ui.tsx           ← Dedicated "Join a report" onboarding screen
+      ui.tsx           ← Dedicated "Join a report" screen
   entries/
     api.ts
     hooks.ts
@@ -1602,77 +1602,6 @@ Line items are persisted to `entry_line_items` in the same transaction as the `e
 
 ---
 
-## U1. Onboarding — First-Run Flow ← NEW
-
-Every new user who has zero reports sees the onboarding flow instead of the empty home screen. It runs once and is never shown again after completion. Completion state stored in `user_preferences.onboarding_completed = true`.
-
-### Screen sequence
-
-**Screen 1 — Welcome**
-```
-Welcome to [App Name]
-
-Track your finances simply,
-together or on your own.
-
-[ Get Started ]
-```
-
-**Screen 2 — Choose your setup**
-```
-How will you use this?
-
-○  Track my personal spending
-   Just for me — income, expenses, budgets
-
-○  Track household finances together
-   Share with partner or family
-
-○  Track a project or business budget
-   Team expenses, freelance income
-
-[ Continue ]
-```
-
-Each option pre-sets:
-- **Personal**: creates a report named "Personal – {year}", currency IDR, no members invited
-- **Household**: creates a report named "Household – {year}", prompts to share code immediately after
-- **Business**: creates a report named "Business – {year}", shows recurring template suggestion for salary
-
-**Screen 3 — Quick category setup**
-```
-What do you usually spend on?
-(We'll set up budgets for these)
-
-☑ Food & Dining
-☑ Transport
-☑ Utilities
-☐ Health
-☐ Entertainment
-☐ Shopping
-☐ Other / Custom...
-
-[ Set Up Budgets ]  [ Skip for now ]
-```
-
-If "Set Up Budgets" is tapped, the user goes through a simple swipe-through for each selected category to enter a monthly budget amount. These are saved to `budgets` via `POST /api/budgets`.
-
-**Screen 4 — First entry prompt**
-```
-You're all set! 🎉
-
-Add your first expense now —
-or scan a receipt to get started.
-
-[ Scan a Receipt ]
-[ Add Manually ]
-[ I'll do this later ]
-```
-
-"I'll do this later" lands on the home dashboard.
-
----
-
 ## U2. Home Dashboard — Multi-Report View ← NEW
 
 The home screen is the first thing a returning user sees. It shows all reports the user owns or is a member of, plus quick-access actions.
@@ -2645,7 +2574,7 @@ Per the user's single biggest concern: the three screens users will interact wit
   /notifications ← notifications center
   /search       ← global search
   /insights     ← AI insights panel
-  /onboarding   ← first-run flow
+
   /settings     ← account, backup, receipt storage
 ```
 
@@ -2663,7 +2592,7 @@ The previous spec defined three core screens but did not specify how to navigate
 
 ### Navigation stack
 
-The app uses a **tab-based root** with a **modal layer** on top. The tab bar is always visible except inside modal flows (scan, onboarding, history detail).
+The app uses a **tab-based root** with a **modal layer** on top. The tab bar is always visible except inside modal flows (scan, history detail).
 
 ```
 Root Tab Bar

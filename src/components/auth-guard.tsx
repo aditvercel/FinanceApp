@@ -4,13 +4,8 @@ import { useAuth } from "@/lib/auth-provider";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, type ReactNode, Suspense } from "react";
 import { TabBar } from "./tab-bar";
-import { safeGetItem } from "@/lib/storage";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/onboarding"];
-
-function isOnboardingCompleted(): boolean {
-  return safeGetItem("onboarding_completed") === "true";
-}
+const PUBLIC_PATHS = ["/login", "/signup"];
 
 export function AuthGuard({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -27,14 +22,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     }
 
     if (isAuthenticated && isPublic) {
-      if (pathname === "/onboarding") return;
-      const done = isOnboardingCompleted();
-      router.replace(done ? "/" : "/onboarding");
-      return;
-    }
-
-    if (isAuthenticated && !isPublic && !isOnboardingCompleted()) {
-      router.replace("/onboarding");
+      router.replace("/");
       return;
     }
   }, [isAuthenticated, isLoading, pathname, router]);

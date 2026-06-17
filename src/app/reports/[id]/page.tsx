@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-provider";
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
 import { useReport, useRequestEditorAccess, useManageMember } from "@/features/finance/reports/hooks";
 import { useToast } from "@/lib/toat";
 import { useInView } from "@/lib/use-in-view";
+import { AvatarCircle } from "@/components/avatar";
 
 import { useActivity } from "@/features/activity/hooks";
 import { useInfiniteEntries } from "@/features/finance/entries/hooks";
@@ -90,6 +91,7 @@ function getActivityIcon(eventType: string): string {
 export default function ReportDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params.id as string;
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -104,6 +106,9 @@ export default function ReportDetailPage() {
   } | null>(null);
   const [requestSent, setRequestSent] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [tabIndex, setTabIndex] = useState(0);
+
   const requestEditor = useRequestEditorAccess();
   const manageMember = useManageMember();
   const { toast } = useToast();
@@ -187,6 +192,18 @@ export default function ReportDetailPage() {
   } = useInfiniteEntries(id.toString());
   const allEntries = entriesPages?.pages?.flatMap(p => p.entries) ?? [];
 
+  useEffect(() => {
+    const entryId = searchParams.get("entryId");
+    if (entryId && allEntries.length > 0) {
+      const entry = allEntries.find((e: Entry) => e.id === entryId);
+      if (entry) {
+        setEditingEntry(entry);
+        setTabIndex(1);
+        router.replace(`/reports/${id}`, { scroll: false });
+      }
+    }
+  }, [searchParams, allEntries]);
+
   const tabs = ["Overview", "Entries", "Charts", "Activity"];
 
   if (reportLoading) {
@@ -265,8 +282,20 @@ export default function ReportDetailPage() {
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 5);
 
+  const filteredEntries =
+    !searchQuery.trim()
+      ? allEntries
+      : allEntries.filter((e: Entry) => {
+          const q = searchQuery.toLowerCase();
+          return (
+            e.category?.toLowerCase().includes(q) ||
+            e.note?.toLowerCase().includes(q) ||
+            String(e.amount).includes(q)
+          );
+        });
+
   const entriesByDate: Record<string, Entry[]> = {};
-  for (const entry of allEntries) {
+  for (const entry of filteredEntries) {
     const key = entry.entryDate;
     if (!entriesByDate[key]) entriesByDate[key] = [];
     entriesByDate[key].push(entry);
@@ -377,7 +406,7 @@ export default function ReportDetailPage() {
         </div>
       </header>
 
-      <TabGroup>
+      <TabGroup selectedIndex={tabIndex} onChange={setTabIndex}>
         <TabList className="flex border-b border-(--border) bg-(--card) px-2 sticky top-37.5 z-10">
           {tabs.map((tab) => (
             <Tab
@@ -497,6 +526,8 @@ export default function ReportDetailPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--muted-foreground)" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search entries..."
                 className="w-full pl-10 pr-3 py-2 border border-(--border) rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -581,10 +612,23 @@ export default function ReportDetailPage() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-(--muted-foreground)">No entries yet.</p>
-                <p className="text-sm text-(--muted-foreground) mt-1">
-                  Tap + to add your first entry.
-                </p>
+                {searchQuery ? (
+                  <>
+                    <p className="text-(--muted-foreground)">
+                      No entries match "{searchQuery}".
+                    </p>
+                    <p className="text-sm text-(--muted-foreground) mt-1">
+                      Try a different search term.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-(--muted-foreground">No entries yet.</p>
+                    <p className="text-sm text-(--muted-foreground) mt-1">
+                      Tap + to add your first entry.
+                    </p>
+                  </>
+                )}
               </div>
             )}
           </TabPanel>
@@ -616,25 +660,59 @@ export default function ReportDetailPage() {
           <TabPanel className="p-4">
             {activities.length > 0 ? (
               <div className="space-y-3">
-                {activities.map((event: { id: string; eventType: string; actorName?: string; createdAt: string }) => (
-                  <div
-                    key={event.id}
-                    className="flex items-start gap-3 p-3 bg-(--card) border border-gray-100 rounded-lg"
-                  >
-                    <span className="text-lg mt-0.5">
-                      {getActivityIcon(event.eventType)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">
-                        {event.actorName}{" "}
-                        {event.eventType.replaceAll(".", " ")}
-                      </p>
-                      <p className="text-xs text-(--muted-foreground) mt-0.5">
-                        {timeAgo(event.createdAt)}
-                      </p>
+                {activities.map((event: {
+                  id: string;
+                  eventType: string;
+                  actorName?: string;
+                  actorAvatarUrl?: string | null;
+                  reportId?: string;
+                  metadata?: Record<string, unknown>;
+                  createdAt: string;
+                }) => {
+                  const entryId = event.metadata?.entryId as string | undefined;
+                  return (
+                    <div
+                      key={event.id}
+                      onClick={() => {
+                        if (event.reportId && entryId && event.eventType.startsWith("entry.")) {
+                          router.push(`/reports/${event.reportId}?entryId=${entryId}`);
+                        } else if (event.reportId) {
+                          router.push(`/reports/${event.reportId}`);
+                        }
+                      }}
+                      className={`flex items-start gap-3 p-3 bg-(--card) border border-gray-100 rounded-lg ${
+                        event.reportId ? "cursor-pointer hover:bg-gray-50" : ""
+                      }`}
+                    >
+                      <div className="mt-0.5 shrink-0">
+                        <AvatarCircle
+                          name={event.actorName ?? "?"}
+                          avatarUrl={event.actorAvatarUrl ?? null}
+                          size="sm"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">
+                          {event.actorName}{" "}
+                          {event.eventType === "entry.created"
+                            ? "added"
+                            : event.eventType === "entry.edited"
+                              ? "edited"
+                              : event.eventType === "entry.reverted"
+                                ? "reverted"
+                                : event.eventType.replaceAll(".", " ")}
+                          {event.metadata?.category ? ` ${String(event.metadata.category)}` : null}
+                        </p>
+                        <p className="text-xs text-(--muted-foreground) mt-0.5">
+                          {event.metadata?.amount
+                            ? `${formatCurrency(event.metadata.amount as number)} · `
+                            : ""}
+                          {timeAgo(event.createdAt)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 <InfiniteSentinel
                   hasNext={hasNextActivity}
                   isFetching={isFetchingNextActivity}

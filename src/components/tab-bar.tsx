@@ -10,7 +10,7 @@ export function TabBar() {
   const [showAddSheet, setShowAddSheet] = useState(false);
   const pathname = usePathname();
 
-  const hideOnPaths = ["/onboarding", "/entries/scan", "/login", "/signup"];
+  const hideOnPaths = ["/entries/scan", "/login", "/signup"];
   if (hideOnPaths.some((p) => pathname.startsWith(p))) return null;
 
   return (

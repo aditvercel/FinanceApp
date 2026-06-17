@@ -22,10 +22,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (isAuthenticated && !authLoading && !emailSent) {
-      const onboardingDone =
-        globalThis.window !== undefined &&
-        localStorage.getItem("onboarding_completed") === "true";
-      router.replace(onboardingDone ? "/" : "/onboarding");
+      router.replace("/");
     }
   }, [isAuthenticated, authLoading, router, emailSent]);
 
@@ -64,10 +61,7 @@ export default function SignupPage() {
       if (emailConfirmationRequired) {
         setEmailSent(true);
       } else {
-        const onboardingDone =
-          globalThis.window !== undefined &&
-          localStorage.getItem("onboarding_completed") === "true";
-        router.replace(onboardingDone ? "/" : "/onboarding");
+        router.replace("/");
       }
     } catch (err: any) {
       setError(err.message || "Signup failed. Please try again.");
