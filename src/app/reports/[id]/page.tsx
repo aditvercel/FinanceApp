@@ -2,7 +2,7 @@
 
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-provider";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
 import { useReport, useRequestEditorAccess, useManageMember } from "@/features/finance/reports/hooks";
@@ -96,7 +96,7 @@ export default function ReportDetailPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [confirmingEntry, setConfirmingEntry] = useState<string | null>(null);
-  const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
+  const [localEditingEntry, setLocalEditingEntry] = useState<Entry | null>(null);
   const [showMembers, setShowMembers] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -107,7 +107,7 @@ export default function ReportDetailPage() {
   const [requestSent, setRequestSent] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [tabIndex, setTabIndex] = useState(0);
+  const [tabIndex, setTabIndex] = useState(searchParams.get("entryId") ? 1 : 0);
 
   const requestEditor = useRequestEditorAccess();
   const manageMember = useManageMember();
@@ -192,17 +192,20 @@ export default function ReportDetailPage() {
   } = useInfiniteEntries(id.toString());
   const allEntries = entriesPages?.pages?.flatMap(p => p.entries) ?? [];
 
-  useEffect(() => {
-    const entryId = searchParams.get("entryId");
-    if (entryId && allEntries.length > 0) {
-      const entry = allEntries.find((e: Entry) => e.id === entryId);
-      if (entry) {
-        setEditingEntry(entry);
-        setTabIndex(1);
-        router.replace(`/reports/${id}`, { scroll: false });
-      }
+  const urlEntryId = searchParams.get("entryId");
+  const editingEntry = useMemo(() => {
+    if (urlEntryId && localEditingEntry === null && allEntries.length > 0) {
+      return allEntries.find((e: Entry) => e.id === urlEntryId) ?? null;
     }
-  }, [searchParams, allEntries]);
+    return localEditingEntry;
+  }, [urlEntryId, allEntries, localEditingEntry]);
+
+  const setEditingEntry = useCallback((entry: Entry | null) => {
+    setLocalEditingEntry(entry);
+    if (!entry && urlEntryId) {
+      router.replace(`/reports/${id}`, { scroll: false });
+    }
+  }, [urlEntryId, id, router]);
 
   const tabs = ["Overview", "Entries", "Charts", "Activity"];
 
@@ -632,7 +635,7 @@ export default function ReportDetailPage() {
                 {searchQuery ? (
                   <>
                     <p className="text-(--muted-foreground)">
-                      No entries match "{searchQuery}".
+                      No entries match ${searchQuery}.
                     </p>
                     <p className="text-sm text-(--muted-foreground) mt-1">
                       Try a different search term.

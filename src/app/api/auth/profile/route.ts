@@ -3,7 +3,7 @@ import { getServiceClient } from "@/lib/supabase";
 import { ok, err } from "@/lib/types";
 import { getRequestId, requireAuth } from "@/lib/middleware";
 import { z } from "zod";
-import crypto from "crypto";
+import crypto from "node:crypto";
 
 const UpdateProfileSchema = z.object({
   displayName: z.string().min(1).max(100).optional(),
